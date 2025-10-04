@@ -1,0 +1,12 @@
+from typing import Optional
+from pydantic import BaseModel
+
+{% for prop in model.properties if prop.submodel %}
+from converters.{{ prop.submodel.lower() }} import {{ prop.submodel }}
+{% endfor %}
+
+class {{ model.class_name }}(BaseModel):
+{% for prop in model.properties %}
+    {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = {{ prop.default }}{% endif %}
+
+{% endfor %}
