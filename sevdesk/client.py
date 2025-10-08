@@ -63,9 +63,9 @@ class Client:
         if request_body:
             request_body = request_body.model_dump(by_alias=True, exclude_none=True)
 
-        print('request_params', request_params)
-        print('request_url', request_url)
-        print('request_body', request_body)
+        # print('request_params', request_params)
+        # print('request_url', request_url)
+        # print('request_body', request_body)
 
         response = self.session.request(
             method=method,
@@ -76,6 +76,6 @@ class Client:
                 'Authorization': self.api_token
             }
         )
-        print(response.status_code)
-        print(response.text)
+        # print(response.status_code)
+        # print(response.text)
         return response.json()
