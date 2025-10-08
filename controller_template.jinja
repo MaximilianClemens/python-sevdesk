@@ -1,4 +1,7 @@
 from sevdesk.base.basecontroller import BaseController
+{% if needs_optional %}
+from typing import Optional
+{% endif %}
 {% for imp in imports %}
 from sevdesk.models.{{ imp.lower() }} import {{ imp }}
 {% endfor %}

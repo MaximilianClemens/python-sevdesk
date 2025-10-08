@@ -1,4 +1,6 @@
+{% if model.needs_optional %}
 from typing import Optional
+{% endif %}
 from pydantic import BaseModel
 
 {% for prop in model.properties if prop.submodel %}

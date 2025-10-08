@@ -3,7 +3,6 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 OPENAPI_FILE = Path("openapi.yaml")
-PATHS_FILE = Path("openapi.yaml")
 MODELS_DIR = Path("sevdesk/models")
 CONVERTERS_DIR = Path("sevdesk/converters")
 CONTROLLERS_DIR = Path("sevdesk/controllers")
@@ -27,85 +26,9 @@ def to_pascal_case(name: str) -> str:
 def first_up(name: str) -> str:
     return name[0].upper() + name[1:]
 
-def load_yaml(path: Path) -> dict:
-    return yaml.safe_load(path.read_text())
-
-def load_schemas() -> dict:
-    data = load_yaml(OPENAPI_FILE)
-    return data.get("components", {}).get("schemas", {})
-
-def transform_schema(name: str, schema: dict):
-    required = schema.get("required", [])
-    properties = []
-    converters = []
-
-    for prop_name, prop in schema.get("properties", {}).items():
-        t = TYPE_MAPPING.get(prop.get("type", "string"), "Any")
-        nullable = prop.get("nullable", False)
-        submodel = None
-
-        if prop.get("type") == "object" and "properties" in prop:
-            submodel = first_up(prop_name)
-            t = submodel
-            converters.append({
-                "class_name": submodel,
-                "properties": [
-                    {
-                        "name": n,
-                        "type": TYPE_MAPPING.get(p.get("type", "string"), "Any"),
-                        "default": None if n in prop.get("required", []) else "None"
-                    }
-                    for n, p in prop.get("properties", {}).items()
-                ]
-            })
-
-        if nullable:
-            t = f"Optional[{t}]"
-
-        default = None if prop_name in required else "None"
-
-        properties.append(
-            {
-                "name": prop_name,
-                "type": t,
-                "default": default,
-                "submodel": submodel,
-            }
-        )
-
-    class_name = name.lstrip('Model_')
-    class_name = first_up(class_name)
-
-    return {
-        "class_name": class_name,
-        "properties": properties,
-        "converters": converters,
-    }
-
-def transform_paths(paths: dict):
-    controllers = {}
-    for path, methods in paths.items():
-        for method, details in methods.items():
-            tag = details.get("tags", ["Default"])[0]
-            operation_id = details.get("operationId", f"{method}_{path.replace('/', '_')}")
-            parameters = details.get("parameters", [])
-            request_body = details.get("requestBody", {})
-            summary = details.get("summary", "")
-            responses = details.get("responses", {})
-
-            if tag not in controllers:
-                controllers[tag] = []
-
-            controllers[tag].append({
-                "method": method.upper(),
-                "path": path,
-                "function": operation_id,
-                "parameters": parameters,
-                "requestBody": request_body,
-                "summary": summary,
-                "responses": responses
-            })
-    return controllers
+def load_openapi() -> dict:
+    """Lädt die komplette OpenAPI Spec"""
+    return yaml.safe_load(OPENAPI_FILE.read_text())
 
 def resolve_ref(ref: str) -> str:
     """z. B. '#/components/schemas/Model_Contact' → 'Contact'"""
@@ -156,18 +79,92 @@ def extract_return_type(responses: dict) -> tuple:
     
     return None, False
 
-def main():
-    MODELS_DIR.mkdir(exist_ok=True)
-    CONVERTERS_DIR.mkdir(exist_ok=True)
-    CONTROLLERS_DIR.mkdir(exist_ok=True)
+def transform_schema(name: str, schema: dict):
+    """Transformiert ein OpenAPI Schema in ein Model-Dict"""
+    required = schema.get("required", [])
+    properties = []
+    converters = []
+    needs_optional = False
 
-    env = Environment(loader=FileSystemLoader("."), trim_blocks=True, lstrip_blocks=True)
+    for prop_name, prop in schema.get("properties", {}).items():
+        t = TYPE_MAPPING.get(prop.get("type", "string"), "Any")
+        nullable = prop.get("nullable", False)
+        is_required = prop_name in required
+        submodel = None
+
+        if prop.get("type") == "object" and "properties" in prop:
+            submodel = first_up(prop_name)
+            t = submodel
+            sub_required = prop.get("required", [])
+            converters.append({
+                "class_name": submodel,
+                "properties": [
+                    {
+                        "name": n,
+                        "type": f"Optional[{TYPE_MAPPING.get(p.get('type', 'string'), 'Any')}]" if n not in sub_required else TYPE_MAPPING.get(p.get("type", "string"), "Any"),
+                        "default": None if n in sub_required else "None"
+                    }
+                    for n, p in prop.get("properties", {}).items()
+                ],
+                "needs_optional": len(sub_required) < len(prop.get("properties", {}))
+            })
+
+        # Wenn nicht required oder nullable, dann Optional
+        if not is_required or nullable:
+            t = f"Optional[{t}]"
+            needs_optional = True
+
+        default = None if is_required else "None"
+
+        properties.append({
+            "name": prop_name,
+            "type": t,
+            "default": default,
+            "submodel": submodel,
+        })
+
+    class_name = name.lstrip('Model_')
+    class_name = first_up(class_name)
+
+    return {
+        "class_name": class_name,
+        "properties": properties,
+        "converters": converters,
+        "needs_optional": needs_optional,
+    }
+
+def transform_paths(paths: dict):
+    """Transformiert OpenAPI Paths in Controller-Dicts"""
+    controllers = {}
+    for path, methods in paths.items():
+        for method, details in methods.items():
+            tag = details.get("tags", ["Default"])[0]
+            operation_id = details.get("operationId", f"{method}_{path.replace('/', '_')}")
+            parameters = details.get("parameters", [])
+            request_body = details.get("requestBody", {})
+            summary = details.get("summary", "")
+            responses = details.get("responses", {})
+
+            if tag not in controllers:
+                controllers[tag] = []
+
+            controllers[tag].append({
+                "method": method.upper(),
+                "path": path,
+                "function": operation_id,
+                "parameters": parameters,
+                "requestBody": request_body,
+                "summary": summary,
+                "responses": responses
+            })
+    return controllers
+
+def generate_models(openapi_spec: dict, env: Environment):
+    """Generiert alle Models und Converters"""
+    schemas = openapi_spec.get("components", {}).get("schemas", {})
     model_template = env.get_template("model_template.jinja")
     converter_template = env.get_template("converter_template.jinja")
-    controller_template = env.get_template("controller_template.jinja")
 
-    # --- Modelle generieren ---
-    schemas = load_schemas()
     for schema_name, schema in schemas.items():
         model = transform_schema(schema_name, schema)
 
@@ -182,12 +179,15 @@ def main():
             conv_path.write_text(conv_content)
             print(f"   ↳ Converter geschrieben: {conv_path}")
 
-    # --- Controller generieren ---
-    paths_data = load_yaml(PATHS_FILE).get("paths", {})
-    controllers = transform_paths(paths_data)
+def generate_controllers(openapi_spec: dict, env: Environment):
+    """Generiert alle Controllers"""
+    paths = openapi_spec.get("paths", {})
+    controllers = transform_paths(paths)
+    controller_template = env.get_template("controller_template.jinja")
 
     for tag, operations in controllers.items():
         imports = set()
+        needs_optional = False
         funcs = []
 
         for op in operations:
@@ -210,6 +210,8 @@ def main():
                     model_name = resolve_ref(ref)
                     imports.add(model_name)
                     param_type = model_name if param_required else f"Optional[{model_name}]"
+                    if not param_required:
+                        needs_optional = True
                     params.append({
                         "name": param_name,
                         "original_name": param_original_name,
@@ -219,6 +221,8 @@ def main():
                 else:
                     t = TYPE_MAPPING.get(p.get("schema", {}).get("type", "string"), "Any")
                     param_type = t if param_required else f"Optional[{t}]"
+                    if not param_required:
+                        needs_optional = True
                     params.append({
                         "name": param_name,
                         "original_name": param_original_name,
@@ -254,10 +258,27 @@ def main():
             controller_name=tag,
             functions=funcs,
             imports=sorted(imports),
+            needs_optional=needs_optional,
         )
         ctrl_path = CONTROLLERS_DIR / f"{tag.lower()}_controller.py"
         ctrl_path.write_text(ctrl_code)
         print(f"🧩 Controller geschrieben: {ctrl_path}")
+
+def main():
+    # Verzeichnisse erstellen
+    MODELS_DIR.mkdir(exist_ok=True)
+    CONVERTERS_DIR.mkdir(exist_ok=True)
+    CONTROLLERS_DIR.mkdir(exist_ok=True)
+
+    # Jinja Environment
+    env = Environment(loader=FileSystemLoader("."), trim_blocks=True, lstrip_blocks=True)
+
+    # OpenAPI Spec laden
+    openapi_spec = load_openapi()
+
+    # Generierung
+    generate_models(openapi_spec, env)
+    generate_controllers(openapi_spec, env)
 
 if __name__ == "__main__":
     main()
