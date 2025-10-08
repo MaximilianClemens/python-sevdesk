@@ -1,21 +1,13 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Upload Python Package
 
 on:
   push:
     branches: [ main ]
-  release:
-    types: [published]
+    paths:
+      - 'sevdesk/__init__.py'
 
 permissions:
-  contents: read
+  contents: write # needed to create tags
 
 jobs:
   release-build:
@@ -23,33 +15,60 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          fetch-depth: 0 # fetch all history for diff/tagging
+
+      - name: Get previous version
+        id: prev_version
+        run: |
+          git show HEAD~1:sevdesk/__init__.py | grep VERSION > prev_version.txt || echo "" > prev_version.txt
+
+      - name: Get current version
+        id: curr_version
+        run: |
+          grep VERSION sevdesk/__init__.py > curr_version.txt || echo "" > curr_version.txt
+
+      - name: Extract current version value
+        id: extract_version
+        run: |
+          NEW_VERSION=$(grep VERSION curr_version.txt | sed 's/.*VERSION.*=\s*[\"\x27]\(.*\)[\"\x27].*/\1/')
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        id: compare
+        run: |
+          if diff prev_version.txt curr_version.txt; then
+            echo "version_unchanged=true" >> $GITHUB_OUTPUT
+          else
+            echo "version_unchanged=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build release distributions
+        if: steps.compare.outputs.version_unchanged == 'false'
         run: |
-          # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
 
       - name: Upload distributions
+        if: steps.compare.outputs.version_unchanged == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: release-dists
           path: dist/
 
+      - name: Create tag for new version
+        if: steps.compare.outputs.version_unchanged == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.extract_version.outputs.version }}"
+          git push origin "v${{ steps.extract_version.outputs.version }}"
+
   pypi-publish:
     runs-on: ubuntu-latest
-    needs:
-      - release-build
+    needs: release-build
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
-
-    # Dedicated environments with protections for publishing are strongly recommended.
-    # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
     environment:
       name: pypi
       url: https://pypi.org/p/sevdesk
@@ -65,3 +84,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+        if: needs.release-build.outputs.version_unchanged == 'false'
