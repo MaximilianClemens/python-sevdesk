@@ -61,11 +61,11 @@ class Client:
         request_url = f'{self.api_base}{request_path}'
         request_body = params.get('body', None)
         if request_body:
-            request_body = request_body.model_dump()
+            request_body = request_body.model_dump(by_alias=True, exclude_none=True)
 
-        # print('request_params', request_params)
-        # print('request_url', request_url)
-        # print('request_body', request_body)
+        print('request_params', request_params)
+        print('request_url', request_url)
+        print('request_body', request_body)
 
         response = self.session.request(
             method=method,

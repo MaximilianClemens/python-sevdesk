@@ -56,11 +56,12 @@ class BaseController:
                 
                 try:
                     # Pre-request: bis zum yield ausführen
-                    request_data = next(gen)
+                    next(gen)
                     # veränderte parameter übernehmen
                     for arg in all_kwargs.copy():
                         # gi_frame HACK
-                        all_kwargs[arg] = gen.gi_frame.f_locals[arg]
+                        if gen.gi_frame:
+                            all_kwargs[arg] = gen.gi_frame.f_locals[arg]
                     
                     response = self.client.request(method, path, all_kwargs)
                     
@@ -74,11 +75,8 @@ class BaseController:
                     # Response in Model umwandeln
                     parsed_response = BaseController.parse_response(response, return_type)
                     
-                    # Post-request: Generator weiterlaufen lassen mit parsed response
-                    try:
-                        gen.send(parsed_response)
-                    except StopIteration as e:
-                        return e.value if e.value is not None else parsed_response
+                    # Gebe das Ergebnis direkt zurück
+                    return parsed_response
                     
                 except StopIteration:
                     return None
