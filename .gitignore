@@ -1,9 +1,6 @@
 .venv/
 openapi.yaml
 
-sevdesk/models/
-sevdesk/converters/
-sevdesk/controllers/
 demo.py
 
 *.pyc

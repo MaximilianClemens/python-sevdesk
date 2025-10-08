@@ -310,7 +310,7 @@ def main():
     CONTROLLERS_DIR.mkdir(exist_ok=True)
 
     # Jinja Environment
-    env = Environment(loader=FileSystemLoader("."), trim_blocks=True, lstrip_blocks=True)
+    env = Environment(loader=FileSystemLoader("./generator"), trim_blocks=True, lstrip_blocks=True)
 
     # OpenAPI Spec laden
     openapi_spec = load_openapi()
