@@ -1,6 +1,7 @@
 from sevdesk.base.basecontroller import BaseController
-{% if needs_optional %}
-from typing import Optional
+{% if needs_optional or needs_any %}
+from typing import {% if needs_optional %}Optional{% endif %}{% if needs_optional and needs_any %}, {% endif %}{% if needs_any %}Any{% endif %}
+
 {% endif %}
 {% for imp in imports %}
 from sevdesk.models.{{ imp.lower() }} import {{ imp }}
@@ -10,7 +11,7 @@ class {{ controller_name}}Controller(BaseController):
 
     {% for fn in functions %}
     @BaseController.{{ fn.method.lower() }}("{{ fn.path }}")
-    def {{ fn.name }}(self{% if fn.params %}, {% endif %}{% for p in fn.params %}{{ p.name }}: {{ p.type }}{% if not p.required %} = None{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% if fn.body_model %}{% if fn.params %}, {% endif %}body: {{ fn.body_model }}{% endif %}){% if fn.return_type %} -> {{ fn.return_type }}{% endif %}:
+    def {{ fn.name }}(self{% if fn.params or fn.body_model %}, {% endif %}{% for p in fn.params %}{{ p.name }}: {{ p.type }}{% if not p.required %} = None{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% if fn.body_model %}{% if fn.params %}, {% endif %}body: {{ fn.body_model }}{% endif %}){% if fn.return_type %} -> {{ fn.return_type }}{% endif %}:
         """{{ fn.summary }}"""
         return (yield)
 

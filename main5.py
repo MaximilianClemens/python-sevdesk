@@ -7,6 +7,16 @@ MODELS_DIR = Path("sevdesk/models")
 CONVERTERS_DIR = Path("sevdesk/converters")
 CONTROLLERS_DIR = Path("sevdesk/controllers")
 
+# Python reservierte Wörter
+PYTHON_KEYWORDS = {
+    'from', 'to', 'import', 'class', 'def', 'return', 'if', 'else', 'elif',
+    'for', 'while', 'break', 'continue', 'pass', 'try', 'except', 'finally',
+    'raise', 'with', 'as', 'lambda', 'yield', 'assert', 'global', 'nonlocal',
+    'del', 'and', 'or', 'not', 'in', 'is', 'None', 'True', 'False', 'type',
+    'object', 'id', 'list', 'dict', 'set', 'tuple', 'str', 'int', 'float',
+    'bool', 'bytes', 'bytearray'
+}
+
 # Typ-Mapping OpenAPI -> Python
 TYPE_MAPPING = {
     "string": "str",
@@ -16,9 +26,16 @@ TYPE_MAPPING = {
     "object": "dict",
 }
 
+def sanitize_field_name(name: str) -> str:
+    """Macht aus Python Keywords sichere Feldnamen"""
+    if name in PYTHON_KEYWORDS:
+        return f"{name}_"
+    return name
+
 def sanitize_param_name(name: str) -> str:
     """Macht aus 'customFieldSetting[id]' -> 'customFieldSetting_id'"""
-    return name.replace("[", "_").replace("]", "")
+    sanitized = name.replace("[", "_").replace("]", "")
+    return sanitize_field_name(sanitized)
 
 def to_pascal_case(name: str) -> str:
     return "".join(part.capitalize() for part in name.split("_"))
@@ -85,28 +102,44 @@ def transform_schema(name: str, schema: dict):
     properties = []
     converters = []
     needs_optional = False
+    needs_any = False
 
     for prop_name, prop in schema.get("properties", {}).items():
+        safe_prop_name = sanitize_field_name(prop_name)
         t = TYPE_MAPPING.get(prop.get("type", "string"), "Any")
+        
+        # Prüfe ob Any verwendet wird
+        if t == "Any":
+            needs_any = True
+        
         nullable = prop.get("nullable", False)
         is_required = prop_name in required
         submodel = None
 
         if prop.get("type") == "object" and "properties" in prop:
-            submodel = first_up(prop_name)
+            submodel = first_up(safe_prop_name)
             t = submodel
             sub_required = prop.get("required", [])
+            sub_properties = []
+            sub_needs_any = False
+            
+            for n, p in prop.get("properties", {}).items():
+                safe_sub_name = sanitize_field_name(n)
+                sub_type = TYPE_MAPPING.get(p.get("type", "string"), "Any")
+                if sub_type == "Any":
+                    sub_needs_any = True
+                sub_properties.append({
+                    "name": safe_sub_name,
+                    "original_name": n,
+                    "type": f"Optional[{sub_type}]" if n not in sub_required else sub_type,
+                    "default": None if n in sub_required else "None"
+                })
+            
             converters.append({
                 "class_name": submodel,
-                "properties": [
-                    {
-                        "name": n,
-                        "type": f"Optional[{TYPE_MAPPING.get(p.get('type', 'string'), 'Any')}]" if n not in sub_required else TYPE_MAPPING.get(p.get("type", "string"), "Any"),
-                        "default": None if n in sub_required else "None"
-                    }
-                    for n, p in prop.get("properties", {}).items()
-                ],
-                "needs_optional": len(sub_required) < len(prop.get("properties", {}))
+                "properties": sub_properties,
+                "needs_optional": len(sub_required) < len(prop.get("properties", {})),
+                "needs_any": sub_needs_any
             })
 
         # Wenn nicht required oder nullable, dann Optional
@@ -117,7 +150,8 @@ def transform_schema(name: str, schema: dict):
         default = None if is_required else "None"
 
         properties.append({
-            "name": prop_name,
+            "name": safe_prop_name,
+            "original_name": prop_name,
             "type": t,
             "default": default,
             "submodel": submodel,
@@ -131,6 +165,7 @@ def transform_schema(name: str, schema: dict):
         "properties": properties,
         "converters": converters,
         "needs_optional": needs_optional,
+        "needs_any": needs_any,
     }
 
 def transform_paths(paths: dict):
@@ -188,6 +223,7 @@ def generate_controllers(openapi_spec: dict, env: Environment):
     for tag, operations in controllers.items():
         imports = set()
         needs_optional = False
+        needs_any = False
         funcs = []
 
         for op in operations:
@@ -220,6 +256,8 @@ def generate_controllers(openapi_spec: dict, env: Environment):
                     })
                 else:
                     t = TYPE_MAPPING.get(p.get("schema", {}).get("type", "string"), "Any")
+                    if t == "Any":
+                        needs_any = True
                     param_type = t if param_required else f"Optional[{t}]"
                     if not param_required:
                         needs_optional = True
@@ -259,6 +297,7 @@ def generate_controllers(openapi_spec: dict, env: Environment):
             functions=funcs,
             imports=sorted(imports),
             needs_optional=needs_optional,
+            needs_any=needs_any,
         )
         ctrl_path = CONTROLLERS_DIR / f"{tag.lower()}_controller.py"
         ctrl_path.write_text(ctrl_code)

@@ -1,8 +1,18 @@
-from typing import Optional
-from pydantic import BaseModel
+{% if model.needs_optional or model.needs_any %}
+from typing import {% if model.needs_optional %}Optional{% endif %}{% if model.needs_optional and model.needs_any %}, {% endif %}{% if model.needs_any %}Any{% endif %}
+
+{% endif %}
+from pydantic import BaseModel, Field
 
 class {{ model.class_name }}(BaseModel):
 {% for prop in model.properties %}
+    {% if prop.original_name is defined and prop.name != prop.original_name %}
+    {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = Field(default={{ prop.default }}, alias="{{ prop.original_name }}"){% else %} = Field(alias="{{ prop.original_name }}"){% endif %}
+
+    {% else %}
     {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = {{ prop.default }}{% endif %}
 
+    {% endif %}
 {% endfor %}
+    class Config:
+        populate_by_name = True
