@@ -1,6 +1,6 @@
-from base.basecontroller import BaseController
+from sevdesk.base.basecontroller import BaseController
 {% for imp in imports %}
-from models.{{ imp.lower() }} import {{ imp }}
+from sevdesk.models.{{ imp.lower() }} import {{ imp }}
 {% endfor %}
 
 class {{ controller_name}}Controller(BaseController):
@@ -9,6 +9,6 @@ class {{ controller_name}}Controller(BaseController):
     @BaseController.{{ fn.method.lower() }}("{{ fn.path }}")
     def {{ fn.name }}({% for p in fn.params %}{{ p.name }}: {{ p.type }}{% if not loop.last %}, {% endif %}{% endfor %}{% if fn.body_model %}, body: {{ fn.body_model }}{% endif %}):
         """{{ fn.summary }}"""
-        pass
+        return (yield)
 
     {% endfor %}

@@ -4,9 +4,9 @@ from jinja2 import Environment, FileSystemLoader
 
 OPENAPI_FILE = Path("openapi.yaml")
 PATHS_FILE = Path("openapi.yaml")
-MODELS_DIR = Path("models")
-CONVERTERS_DIR = Path("converters")
-CONTROLLERS_DIR = Path("controllers")
+MODELS_DIR = Path("sevdeskapi/models")
+CONVERTERS_DIR = Path("sevdeskapi/converters")
+CONTROLLERS_DIR = Path("sevdeskapi/controllers")
 
 # Typ-Mapping OpenAPI -> Python
 TYPE_MAPPING = {

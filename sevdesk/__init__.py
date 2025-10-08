@@ -1,0 +1,1 @@
+from sevdesk.client import Client
