@@ -12,7 +12,8 @@ permissions:
 jobs:
   release-build:
     runs-on: ubuntu-latest
-
+    outputs:
+      version_unchanged: ${{ steps.compare.outputs.version_unchanged }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,8 +62,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.extract_version.outputs.version }}"
-          git push origin "v${{ steps.extract_version.outputs.version }}"
+          git tag "${{ steps.extract_version.outputs.version }}"
+          git push origin "${{ steps.extract_version.outputs.version }}"
 
   pypi-publish:
     runs-on: ubuntu-latest
