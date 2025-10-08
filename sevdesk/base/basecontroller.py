@@ -49,3 +49,11 @@ class BaseController:
     @staticmethod
     def post(path):
         return BaseController.request('post', path)
+
+    @staticmethod
+    def put(path):
+        return BaseController.request('put', path)
+
+    @staticmethod
+    def delete(path):
+        return BaseController.request('delete', path)
