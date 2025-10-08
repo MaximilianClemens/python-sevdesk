@@ -6,3 +6,9 @@ demo2.py
 demo3.py
 
 .env
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+__pycache__/
