@@ -1,11 +1,6 @@
 .venv/
 openapi.yaml
-
-demo.py
-
 *.pyc
-
-
 demo.py
 demo2.py
 demo3.py
