@@ -3,6 +3,9 @@ import re
 import importlib
 from pathlib import Path
 
+class Dummy:
+    pass
+
 class Client:
 
     def __init__(self, api_token, api_base='https://my.sevdesk.de/api/v1', session=None):
@@ -13,11 +16,17 @@ class Client:
             self.session = requests.Session()
 
         # Automatisch alle Controller laden
-        self._load_controllers()
-
-    def _load_controllers(self):
-        """Lädt automatisch alle Controller aus dem controllers Verzeichnis"""
         controllers_dir = Path(__file__).parent / "controllers"
+        self._load_controllers(controllers_dir, self, "sevdesk.controllers")
+        
+        self.undocumented = Dummy()
+        controllers_dir2 = Path(__file__).parent / "undocumented" / "controllers"
+        self._load_controllers(controllers_dir2, self.undocumented, "sevdesk.undocumented.controllers")
+
+
+    def _load_controllers(self, controllers_dir, target, module_path):
+        """Lädt automatisch alle Controller aus dem controllers Verzeichnis"""
+        # controllers_dir = Path(__file__).parent / "controllers"
         
         if not controllers_dir.exists():
             return
@@ -28,7 +37,7 @@ class Client:
             
             try:
                 # Dynamisch importieren
-                module = importlib.import_module(f"sevdesk.controllers.{controller_file.stem}")
+                module = importlib.import_module(f"{module_path}.{controller_file.stem}")
                 
                 # Finde die Controller-Klasse im Modul (endet mit "Controller")
                 controller_class = None
@@ -42,7 +51,7 @@ class Client:
                 
                 if controller_class:
                     # Als Attribut setzen: self.contact = ContactController(self)
-                    setattr(self, controller_name, controller_class(self))
+                    setattr(target, controller_name, controller_class(self))
                 else:
                     print(f"Warning: No controller class found in {controller_file.stem}")
                 
@@ -78,4 +87,19 @@ class Client:
         )
         # print(response.status_code)
         # print(response.text)
-        return response.json()
+        content_type = response.headers.get('content-type', '').lower()
+        
+        # PDF oder andere Binary-Daten
+        if 'application/pdf' in content_type:
+            return response.content
+        
+        # Andere Binary-Formate
+        elif any(binary_type in content_type for binary_type in [
+            'application/octet-stream',
+            'image/',
+            'application/zip',
+            'application/xml'  # Für invoiceGetXml
+        ]):
+            return response.content
+        else:
+            return response.json()
