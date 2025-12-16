@@ -17,6 +17,42 @@ Ein Python-Client für die sevDesk API, automatisch generiert aus der OpenAPI-Sp
 pip install sevdesk
 ```
 
+## Quick Start
+
+```python
+from sevdesk import Client
+from datetime import datetime
+
+# Client initialisieren
+client = Client('your-api-token')
+
+# Kontakt suchen oder erstellen
+contact = client.contactHelper.find_by_mail('max@example.com')
+if not contact:
+    contact = client.contactHelper.create(
+        name='Max Mustermann',
+        email='max@example.com'
+    )
+
+# Rechnung mit Positionen erstellen
+invoice = client.invoiceHelper.new(
+    contact=contact,
+    invoiceNumber='REC-2024-001',
+    invoiceDate=datetime.now().isoformat()
+)
+
+# Positionen hinzufügen
+invoice.addPosition('Consulting', quantity=10, price=150.00, taxRate=19.0)
+
+# Speichern und PDF generieren
+invoice.save(status='100')  # 100 = Draft
+invoice.render()
+
+print(f"✅ Rechnung erstellt: ID {invoice._saved_id}")
+```
+
+Siehe `/samples/` für mehr Beispiele!
+
 ## Anforderungen
 
 - Python 3.8+
@@ -124,7 +160,110 @@ client.contact.deleteContact(contactId=123456)
 print("Kontakt gelöscht")
 ```
 
-## Verfügbare Controller
+## High-Level API (Empfohlen)
+
+Die High-Level API bietet vereinfachte Funktionen für häufige Aufgaben ohne direkte API-Komplexität:
+
+### Kontakt suchen oder erstellen
+
+```python
+# Nach E-Mail suchen (mit Deduplizierung)
+contact = client.contactHelper.find_by_mail('max@example.com')
+
+# Neuen Kontakt erstellen wenn nicht gefunden
+if not contact:
+    contact = client.contactHelper.create(
+        name='Max Mustermann',
+        email='max@example.com',
+        surname='Mustermann'
+    )
+
+print(f"Kontakt-ID: {contact.id_}")
+```
+
+### Nach Custom Field suchen
+
+```python
+# Kontakt nach Custom Field suchen
+contact = client.contactHelper.find_by_customfield(
+    field='revitoid',
+    value='1234567890'
+)
+```
+
+### Rechnung erstellen mit Positionen (Fluent API)
+
+```python
+# Einfache Rechnung mit Positionen
+invoice = client.invoiceHelper.new(
+    contact=contact,
+    invoiceNumber='REC-2024-001',
+    invoiceDate='2024-01-01'
+)
+
+# Positionen hinzufügen (mit Method Chaining)
+invoice \
+    .addPosition('Consulting', quantity=10, price=150.00, taxRate=19.0) \
+    .addPosition('Support', quantity=1, price=500.00, taxRate=19.0) \
+    .save(status='100')  # 100 = Draft, 1000 = Abgeschlossen
+
+print(f"Rechnung erstellt: {invoice._saved_id}")
+```
+
+### Rechnung abrufen und verwalten
+
+```python
+# Nach ID suchen
+invoice = client.invoiceHelper.find_by_id(123456)
+
+# Nach Rechnungsnummer suchen
+invoice = client.invoiceHelper.find_by_number('REC-2024-001')
+
+# Rechnungen auflisten mit Filter
+invoices = client.invoiceHelper.list(
+    contact_id=contact.id_,
+    status='100',  # Nur Drafts
+    limit=10
+)
+
+# PDF generieren
+invoice.render()
+pdf_data = invoice.getPDF(download=True)
+
+# Als versendet markieren
+invoice.markAsSent()
+```
+
+### Batch-Operationen
+
+```python
+# Mehrere Rechnungen in einer Schleife erstellen
+for order in orders:
+    contact = client.contactHelper.find_by_mail(order['email'])
+    if not contact:
+        contact = client.contactHelper.create(
+            name=order['company'],
+            email=order['email']
+        )
+    
+    invoice = client.invoiceHelper.new(
+        contact=contact,
+        invoiceNumber=order['invoice_num'],
+        invoiceDate=datetime.now().isoformat()
+    )
+    
+    for item in order['items']:
+        invoice.addPosition(
+            name=item['name'],
+            quantity=item['qty'],
+            price=item['price'],
+            taxRate=19.0
+        )
+    
+    invoice.save(status='100')
+```
+
+## Verfügbare Controller (Low-Level API)
 
 Der Client lädt automatisch alle verfügbaren Controller aus der OpenAPI-Spezifikation:
 
@@ -137,7 +276,43 @@ Der Client lädt automatisch alle verfügbaren Controller aus der OpenAPI-Spezif
 
 Alle Endpoints sind als Methoden verfügbar und vollständig typisiert für IDE-Unterstützung.
 
-## Code neu generieren
+### High-Level Helper
+
+- `client.contactHelper` - Vereinfachte Kontaktoperationen
+- `client.invoiceHelper` - Vereinfachte Rechnungsoperationen
+
+## Beispiele und Samples
+
+Im `/samples` Verzeichnis findest du vollständige, ausführbare Beispiele:
+
+1. **`01_simple_invoice.py`** - Einfache Rechnung erstellen
+   - Kontakt nach E-Mail suchen/erstellen
+   - Rechnung mit einer Position
+   - Als Draft speichern
+   - PDF generieren
+
+2. **`02_contact_management.py`** - Kontaktverwaltung
+   - Nach E-Mail suchen
+   - Nach Custom Field suchen
+   - Neuen Kontakt erstellen
+   - Kontakt per ID abrufen
+   - Alle Kontakte auflisten
+
+3. **`03_advanced_invoice.py`** - Erweiterte Rechnungen
+   - Rechnung mit mehreren Positionen
+   - Fluent API für Method Chaining
+   - PDF-Generierung
+   - PDF-Download
+   - Als versendet markieren
+   - Rechnungen filtern und auflisten
+
+4. **`04_batch_operations.py`** - Batch-Verarbeitung
+   - Mehrere Rechnungen in einer Schleife erstellen
+   - Fehlerbehandlung bei Batch-Operationen
+   - Zusammenfassung und Reporting
+   - Automatische Kontakterstellung bei Bedarf
+
+
 
 Falls sich die sevDesk API ändert:
 

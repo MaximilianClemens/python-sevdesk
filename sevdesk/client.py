@@ -6,6 +6,9 @@ from pathlib import Path
 class Dummy:
     pass
 
+# Importiere Helper
+from sevdesk.helpers import ContactHelper, InvoiceHelper
+
 class Client:
 
     def __init__(self, api_token, api_base='https://my.sevdesk.de/api/v1', session=None):
@@ -22,6 +25,10 @@ class Client:
         self.undocumented = Dummy()
         controllers_dir2 = Path(__file__).parent / "undocumented" / "controllers"
         self._load_controllers(controllers_dir2, self.undocumented, "sevdesk.undocumented.controllers")
+        
+        # Helper laden
+        self.contactHelper = ContactHelper(self)
+        self.invoiceHelper = InvoiceHelper(self)
 
 
     def _load_controllers(self, controllers_dir, target, module_path):
