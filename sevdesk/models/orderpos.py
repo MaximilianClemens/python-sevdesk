@@ -7,25 +7,27 @@ from sevdesk.converters.unity import Unity
 from sevdesk.converters.sevclient import SevClient
 
 class OrderPos(BaseModel):
-    id_: Optional[int] = Field(default=None, alias="id")
-    objectName: Optional[str] = None
-    create: Optional[str] = None
-    update: Optional[str] = None
-    order: Optional[Order] = None
-    part: Optional[Part] = None
-    quantity: float
-    price: Optional[float] = None
-    priceNet: Optional[float] = None
-    priceTax: Optional[float] = None
-    priceGross: Optional[float] = None
-    name: Optional[str] = None
-    unity: Unity
-    sevClient: Optional[SevClient] = None
-    positionNumber: Optional[int] = None
-    text: Optional[str] = None
-    discount: Optional[float] = None
-    optional: Optional[bool] = None
-    taxRate: float
-    sumDiscount: Optional[float] = None
+    """Order position model"""
+
+    id_: Optional[int] = Field(default=None, alias="id", description="The order position id")
+    objectName: Optional[str] = Field(default=None, description="The order position object name")
+    create: Optional[str] = Field(default=None, description="Date of order position creation")
+    update: Optional[str] = Field(default=None, description="Date of last order position update")
+    order: Optional[Order] = Field(default=None, description="The order to which the position belongs.")
+    part: Optional[Part] = Field(default=None, description="Part from your inventory which is used in the position.")
+    quantity: float = Field(description="Quantity of the article/part")
+    price: Optional[float] = Field(default=None, description="Price of the article/part. Is either gross or net, depending on the sevdesk account setting.")
+    priceNet: Optional[float] = Field(default=None, description="Net price of the part")
+    priceTax: Optional[float] = Field(default=None, description="Tax on the price of the part")
+    priceGross: Optional[float] = Field(default=None, description="Gross price of the part")
+    name: Optional[str] = Field(default=None, description="Name of the article/part.")
+    unity: Unity = Field(description="The unit in which the positions part is measured")
+    sevClient: Optional[SevClient] = Field(default=None, description="Client to which order position belongs. Will be filled automatically")
+    positionNumber: Optional[int] = Field(default=None, description="Position number of your position. Can be used to order multiple positions.")
+    text: Optional[str] = Field(default=None, description="A text describing your position.")
+    discount: Optional[float] = Field(default=None, description="An optional discount of the position.")
+    optional: Optional[bool] = Field(default=None, description="Defines if the position is optional.")
+    taxRate: float = Field(description="Tax rate of the position.")
+    sumDiscount: Optional[float] = Field(default=None, description="Discount sum of the position")
     class Config:
         populate_by_name = True
