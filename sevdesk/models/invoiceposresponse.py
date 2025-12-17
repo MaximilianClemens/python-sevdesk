@@ -13,7 +13,7 @@ class InvoicePosResponse(BaseModel):
     update: Optional[str] = None
     invoice: Optional[Invoice] = None
     part: Optional[Part] = None
-    quantity: Optional[bool] = None
+    quantity: Optional[str] = None
     price: Optional[str] = None
     name: Optional[str] = None
     unity: Optional[Unity] = None

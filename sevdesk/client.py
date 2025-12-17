@@ -47,12 +47,14 @@ class Client:
                 module = importlib.import_module(f"{module_path}.{controller_file.stem}")
                 
                 # Finde die Controller-Klasse im Modul (endet mit "Controller")
+                # Wichtig: Nur Klassen die IN DIESEM Modul definiert sind, nicht importierte
                 controller_class = None
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and 
-                        attr_name.endswith("Controller") and 
-                        attr_name != "BaseController"):
+                    if (isinstance(attr, type) and
+                        attr_name.endswith("Controller") and
+                        attr_name != "BaseController" and
+                        attr.__module__ == module.__name__):  # Nur aus diesem Modul!
                         controller_class = attr
                         break
                 

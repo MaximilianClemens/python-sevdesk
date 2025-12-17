@@ -144,7 +144,7 @@ class ContactHelper:
                 pass  # Email-Fehler sollten nicht den Kontakt ungültig machen
         
         # Neuen Kontakt abrufen und zurückgeben
-        return self.client.contact.getContactById(new_contact_id)
+        return self.get_by_id(new_contact_id)
     
     def get_by_id(self, contact_id: int):
         """

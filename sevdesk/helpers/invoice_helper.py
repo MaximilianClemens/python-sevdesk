@@ -15,7 +15,7 @@ Beispiele:
 
 from datetime import datetime
 from typing import Optional
-from sevdesk.extended.invoice_ext import InvoiceExt
+from sevdesk.helpermodels.invoice_ext import InvoiceExt
 from sevdesk.converters.contact import Contact
 from sevdesk.converters.contactperson import ContactPerson
 from sevdesk.converters.addresscountry import AddressCountry
