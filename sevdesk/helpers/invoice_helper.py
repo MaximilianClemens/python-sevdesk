@@ -24,10 +24,29 @@ from sevdesk.converters.taxrule import TaxRule
 
 class InvoiceHelper:
     """Helper-Klasse für Rechnungs-Operationen auf hohem Level"""
-    
+
     def __init__(self, client):
         self.client = client
-    
+        self._cached_sev_user_id = None
+
+    def _get_default_contact_person_id(self) -> int:
+        """Holt den ersten verfuegbaren SevUser als ContactPerson-ID"""
+        if self._cached_sev_user_id:
+            return self._cached_sev_user_id
+        try:
+            users = self.client.undocumented.sevuser.getSevUsers(limit=1)
+            if users and len(users) > 0:
+                user = users[0]
+                user_id = user.get('id') or user.get('id_')
+                if user_id:
+                    self._cached_sev_user_id = int(user_id)
+                    return self._cached_sev_user_id
+        except Exception:
+            pass
+        raise RuntimeError(
+            "Kein SevUser gefunden. Bitte contactPerson_id explizit angeben."
+        )
+
     def new(self,
             contact,
             invoiceDate: Optional[str] = None,
@@ -42,7 +61,7 @@ class InvoiceHelper:
             taxType: str = "default",
             currency: str = "EUR",
             discount: int = 0,
-            contactPerson_id: int = 1370583,
+            contactPerson_id: Optional[int] = None,
             contactPerson_name: str = "SevUser",
             header: Optional[str] = None,
             headText: Optional[str] = None,
@@ -61,12 +80,12 @@ class InvoiceHelper:
             taxRate: Steuersatz (default: 19)
             taxRule_id: Steuerregel-ID
             currency: Währung (default: EUR)
-            contactPerson_id: Ansprechpartner-ID
+            contactPerson_id: Ansprechpartner-ID (optional, wird automatisch ermittelt)
             header: Header-Text
             headText: Kopftext
             footText: Fußtext
             timeToPay: Zahlungsfrist in Tagen
-            
+
         Returns:
             InvoiceExt-Objekt (noch nicht gespeichert)
         """
@@ -79,11 +98,15 @@ class InvoiceHelper:
             # ContactResponse oder ähnliches Objekt -> zu Contact converter konvertieren
             contact = Contact(id_=contact.id_, objectName="Contact")
         # Sonst: Annahme dass es ein Contact-Objekt ist
-        
+
         # Datum default auf heute
         if invoiceDate is None:
             invoiceDate = datetime.now().strftime("%Y-%m-%d")
-        
+
+        # ContactPerson-ID: automatisch holen wenn nicht angegeben
+        if contactPerson_id is None:
+            contactPerson_id = self._get_default_contact_person_id()
+
         # InvoiceExt erstellen
         invoice = InvoiceExt(
             contact=contact,
