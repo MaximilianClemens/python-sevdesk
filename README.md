@@ -1,15 +1,12 @@
 # sevDesk API Client (Inoffiziell)
 
-Ein Python-Client für die sevDesk API, automatisch generiert aus der OpenAPI-Spezifikation. Dies ist notwendig, da sich die sevdesk-Spezifikation mit dem Standard OpenApi-Generator nicht parsen lässt.
+Python-Client fuer die sevDesk API, generiert aus der OpenAPI-Spezifikation.
 
-## ⚠️ Wichtige Hinweise
+## Wichtig
 
-- **Dies ist KEINE offizielle sevDesk Library**
-- Ich arbeite nicht für sevDesk und bin nicht mit sevDesk verbunden
-- **Nutzung auf eigene Gefahr**
-- Keine Garantie für Funktionalität oder Vollständigkeit
-- Bei Problemen mit Markenrechten oder dem Library-Namen kontaktieren Sie mich bitte
-- Falls sich offizielle Vertreter von sevDesk am Namen der Library stören, bin ich bereit, diesen zu übertragen oder die Library unter einem anderen Namen zu veröffentlichen
+- **Keine offizielle sevDesk Library**
+- Nutzung auf eigene Gefahr
+- Bei Problemen mit Markenrechten bitte kontaktieren
 
 ## Installation
 
@@ -21,315 +18,184 @@ pip install sevdesk
 
 ```python
 from sevdesk import Client
-from datetime import datetime
 
-# Client initialisieren
 client = Client('your-api-token')
 
-# Kontakt suchen oder erstellen
+# Kontakt suchen/erstellen
 contact = client.contactHelper.find_by_mail('max@example.com')
 if not contact:
-    contact = client.contactHelper.create(
-        name='Max Mustermann',
-        email='max@example.com'
-    )
+    contact = client.contactHelper.create(name='Max Mustermann', email='max@example.com')
 
-# Rechnung mit Positionen erstellen
-invoice = client.invoiceHelper.new(
-    contact=contact,
-    invoiceNumber='REC-2024-001',
-    invoiceDate=datetime.now().isoformat()
-)
-
-# Positionen hinzufügen
-invoice.addPosition('Consulting', quantity=10, price=150.00, taxRate=19.0)
-
-# Speichern und PDF generieren
-invoice.save(status='100')  # 100 = Draft
+# Rechnung erstellen
+invoice = client.invoiceHelper.new(contact=contact, invoiceNumber='REC-001')
+invoice.addPosition('Consulting', quantity=10, price=150.00)
+invoice.save(status='100')  # 100=Draft
 invoice.render()
-
-print(f"✅ Rechnung erstellt: ID {invoice._saved_id}")
 ```
 
-Siehe `/samples/` für mehr Beispiele!
+## Helper (High-Level API)
 
-## Anforderungen
+| Helper | Beschreibung |
+|--------|--------------|
+| `contactHelper` | Kontakte suchen, erstellen, verwalten |
+| `invoiceHelper` | Rechnungen erstellen, finalisieren, stornieren |
+| `orderHelper` | Angebote, Auftragsbestaetigungen, Lieferscheine |
+| `creditNoteHelper` | Gutschriften verwalten |
+| `partHelper` | Artikel/Produkte verwalten |
+| `letterHelper` | Briefe erstellen, PDF rendern |
+| `bankHelper` | Bankkonten, Transaktionen, Kontostand |
+| `voucherHelper` | Belege/Ausgaben verwalten |
 
-- Python 3.8+
-- pydantic
-- requests
-- pyyaml
-- jinja2
-
-## Verwendung
-
-### Client initialisieren
+### contactHelper
 
 ```python
-from sevdesk import Client
-
-# API Token von sevDesk Dashboard holen
-client = Client('your-api-token-here')
+contact = client.contactHelper.find_by_mail('mail@example.com')
+contact = client.contactHelper.find_by_customfield('revitoid', '123')
+contact = client.contactHelper.create(name='Firma GmbH', email='mail@example.com')
 ```
 
-### Kontakte abrufen
+### invoiceHelper
 
 ```python
-# Alle Kontakte abrufen
+invoice = client.invoiceHelper.new(contact=contact, invoiceNumber='REC-001')
+invoice.addPosition('Service', quantity=1, price=100.00, taxRate=19.0)
+invoice.save(status='100')
+invoice.render()
+pdf = invoice.getPDF(download=True)
+```
+
+### letterHelper
+
+```python
+letter = client.letterHelper.new(
+    contact=contact,
+    header='Betreff',
+    text='<p>HTML-Inhalt</p>'
+)
+letter.save()
+letter.render()
+pdf = letter.getPDF()
+```
+
+### bankHelper
+
+```python
+accounts = client.bankHelper.get_accounts()
+transactions = client.bankHelper.get_transactions(account_id=123, start_date='2025-01-01')
+balance = client.bankHelper.get_balance(account_id=123)
+credits = client.bankHelper.get_credits(account_id=123)
+debits = client.bankHelper.get_debits(account_id=123)
+```
+
+### voucherHelper
+
+```python
+vouchers = client.voucherHelper.list(status='open')
+expenses = client.voucherHelper.get_expenses()
+totals = client.voucherHelper.calculate_totals(vouchers)
+positions = client.voucherHelper.get_positions(voucher_id=123)
+```
+
+### orderHelper
+
+```python
+# Angebot erstellen
+order = client.orderHelper.new(contact=contact, orderNumber='AN-001', orderType='AN')
+order.addPosition('Beratung', quantity=10, price=150.00)
+order.save()
+pdf = order.getPDF()
+
+# Angebote auflisten
+estimates = client.orderHelper.get_estimates()
+confirmations = client.orderHelper.get_confirmations()
+```
+
+### partHelper
+
+```python
+# Artikel erstellen
+part = client.partHelper.create(name='Beratung', partNumber='CONS-01', price=150.00)
+
+# Artikel suchen
+part = client.partHelper.find_by_number('CONS-01')
+part = client.partHelper.get_or_create(name='Service', partNumber='SRV-01', price=100.00)
+
+# Alle Artikel
+parts = client.partHelper.list()
+```
+
+### creditNoteHelper
+
+```python
+creditnotes = client.creditNoteHelper.list()
+open_cn = client.creditNoteHelper.get_open()
+pdf = client.creditNoteHelper.get_pdf(creditnote_id=123)
+```
+
+## Low-Level API (Controller)
+
+Direkter Zugriff auf alle API-Endpoints:
+
+```python
 contacts = client.contact.getContacts()
-
-for contact in contacts:
-    print(f"ID: {contact.id_}")
-    print(f"Name: {contact.name or f'{contact.surename} {contact.familyname}'}")
-    print(f"Kundennummer: {contact.customerNumber}")
-    print(f"Status: {contact.status}")
-    print("-" * 40)
-```
-
-### Neuen Kontakt erstellen
-
-```python
-from sevdesk.models.contact import Contact
-from sevdesk.converters.category import Category
-
-# Organisation erstellen
-company = Contact(
-    name="Acme Corporation GmbH",
-    category=Category(id_=3, objectName="Category")
-)
-new_company = client.contact.createContact(body=company)
-print(f"Organisation erstellt mit ID: {new_company.id_}")
-
-# Person erstellen
-person = Contact(
-    surename="Max",
-    familyname="Mustermann",
-    gender="m",
-    category=Category(id_=3, objectName="Category")
-)
-new_person = client.contact.createContact(body=person)
-print(f"Person erstellt mit ID: {new_person.id_}")
-```
-
-### Rechnungen abrufen
-
-```python
-# Alle Rechnungen abrufen
 invoices = client.invoice.getInvoices()
-
-for invoice in invoices:
-    print(f"Rechnungsnummer: {invoice.invoiceNumber}")
-    print(f"Datum: {invoice.invoiceDate}")
-    print(f"Betrag: {invoice.sumGross} {invoice.currency}")
-    print(f"Status: {invoice.status}")
-    print("-" * 40)
-```
-
-### Angebote abrufen
-
-```python
-# Alle Angebote abrufen
 orders = client.order.getOrders()
-
-for order in orders:
-    print(f"Angebotsnummer: {order.orderNumber}")
-    print(f"Datum: {order.orderDate}")
-    print(f"Betrag: {order.sumGross} {order.currency}")
-    print(f"Status: {order.status}")
-    print("-" * 40)
+vouchers = client.voucher.getVouchers()
 ```
 
-### Kontakt aktualisieren
+## Samples
 
-```python
-from sevdesk.models.contactupdate import ContactUpdate
+| Sample | Beschreibung |
+|--------|--------------|
+| `01_create_invoice.py` | Rechnung mit Positionen erstellen |
+| `02_finalize_invoice.py` | Rechnung finalisieren und PDF |
+| `03_invoice_status.py` | Rechnungsstatus aendern |
+| `04_cancel_invoice.py` | Rechnung stornieren |
+| `05_create_letter.py` | Brief erstellen und PDF |
+| `06_bank_transactions.py` | Bankkonten und Umsaetze |
+| `07_vouchers_expenses.py` | Belege/Ausgaben verwalten |
+| `08_orders_estimates.py` | Angebote erstellen und verwalten |
+| `09_parts_articles.py` | Artikel/Produkte verwalten |
+| `10_creditnotes.py` | Gutschriften verwalten |
 
-# Kontakt aktualisieren
-update_data = ContactUpdate(
-    name="Neue Firma GmbH"
-)
-updated = client.contact.updateContact(contactId=123456, body=update_data)
-print(f"Kontakt aktualisiert: {updated.name}")
-```
-
-### Kontakt löschen
-
-```python
-# Kontakt löschen
-client.contact.deleteContact(contactId=123456)
-print("Kontakt gelöscht")
-```
-
-## High-Level API (Empfohlen)
-
-Die High-Level API bietet vereinfachte Funktionen für häufige Aufgaben ohne direkte API-Komplexität:
-
-### Kontakt suchen oder erstellen
-
-```python
-# Nach E-Mail suchen (mit Deduplizierung)
-contact = client.contactHelper.find_by_mail('max@example.com')
-
-# Neuen Kontakt erstellen wenn nicht gefunden
-if not contact:
-    contact = client.contactHelper.create(
-        name='Max Mustermann',
-        email='max@example.com',
-        surname='Mustermann'
-    )
-
-print(f"Kontakt-ID: {contact.id_}")
-```
-
-### Nach Custom Field suchen
-
-```python
-# Kontakt nach Custom Field suchen
-contact = client.contactHelper.find_by_customfield(
-    field='revitoid',
-    value='1234567890'
-)
-```
-
-### Rechnung erstellen mit Positionen (Fluent API)
-
-```python
-# Einfache Rechnung mit Positionen
-invoice = client.invoiceHelper.new(
-    contact=contact,
-    invoiceNumber='REC-2024-001',
-    invoiceDate='2024-01-01'
-)
-
-# Positionen hinzufügen (mit Method Chaining)
-invoice \
-    .addPosition('Consulting', quantity=10, price=150.00, taxRate=19.0) \
-    .addPosition('Support', quantity=1, price=500.00, taxRate=19.0) \
-    .save(status='100')  # 100 = Draft, 1000 = Abgeschlossen
-
-print(f"Rechnung erstellt: {invoice._saved_id}")
-```
-
-### Rechnung abrufen und verwalten
-
-```python
-# Nach ID suchen
-invoice = client.invoiceHelper.find_by_id(123456)
-
-# Nach Rechnungsnummer suchen
-invoice = client.invoiceHelper.find_by_number('REC-2024-001')
-
-# Rechnungen auflisten mit Filter
-invoices = client.invoiceHelper.list(
-    contact_id=contact.id_,
-    status='100',  # Nur Drafts
-    limit=10
-)
-
-# PDF generieren
-invoice.render()
-pdf_data = invoice.getPDF(download=True)
-
-# Als versendet markieren
-invoice.markAsSent()
-```
-
-### Batch-Operationen
-
-```python
-# Mehrere Rechnungen in einer Schleife erstellen
-for order in orders:
-    contact = client.contactHelper.find_by_mail(order['email'])
-    if not contact:
-        contact = client.contactHelper.create(
-            name=order['company'],
-            email=order['email']
-        )
-    
-    invoice = client.invoiceHelper.new(
-        contact=contact,
-        invoiceNumber=order['invoice_num'],
-        invoiceDate=datetime.now().isoformat()
-    )
-    
-    for item in order['items']:
-        invoice.addPosition(
-            name=item['name'],
-            quantity=item['qty'],
-            price=item['price'],
-            taxRate=19.0
-        )
-    
-    invoice.save(status='100')
-```
-
-## Verfügbare Controller (Low-Level API)
-
-Der Client lädt automatisch alle verfügbaren Controller aus der OpenAPI-Spezifikation:
-
-- `client.contact` - Kontaktverwaltung
-- `client.invoice` - Rechnungsverwaltung
-- `client.order` - Angebotsverwaltung
-- `client.voucher` - Belegverwaltung
-- `client.part` - Artikelverwaltung
-- ... und viele mehr
-
-Alle Endpoints sind als Methoden verfügbar und vollständig typisiert für IDE-Unterstützung.
-
-### High-Level Helper
-
-- `client.contactHelper` - Vereinfachte Kontaktoperationen
-- `client.invoiceHelper` - Vereinfachte Rechnungsoperationen
-
-## Beispiele und Samples
-
-Im `/samples` Verzeichnis findest du vollständige, ausführbare Beispiele:
-
-1. **`01_simple_invoice.py`** - Einfache Rechnung erstellen
-   - Kontakt nach E-Mail suchen/erstellen
-   - Rechnung mit einer Position
-   - Als Draft speichern
-   - PDF generieren
-
-2. **`02_contact_management.py`** - Kontaktverwaltung
-   - Nach E-Mail suchen
-   - Nach Custom Field suchen
-   - Neuen Kontakt erstellen
-   - Kontakt per ID abrufen
-   - Alle Kontakte auflisten
-
-3. **`03_advanced_invoice.py`** - Erweiterte Rechnungen
-   - Rechnung mit mehreren Positionen
-   - Fluent API für Method Chaining
-   - PDF-Generierung
-   - PDF-Download
-   - Als versendet markieren
-   - Rechnungen filtern und auflisten
-
-4. **`04_batch_operations.py`** - Batch-Verarbeitung
-   - Mehrere Rechnungen in einer Schleife erstellen
-   - Fehlerbehandlung bei Batch-Operationen
-   - Zusammenfassung und Reporting
-   - Automatische Kontakterstellung bei Bedarf
-
-
-
-Falls sich die sevDesk API ändert:
+Alle Samples nutzen `.env` fuer den API-Key:
 
 ```bash
-# Neue openapi.yaml herunterladen
-# Dann Generator ausführen:
+cp .env.example .env
+# SEVDESK_API_KEY in .env eintragen
+python samples/01_create_invoice.py
+```
+
+## Generator
+
+Models und Controller werden aus der OpenAPI-Spec generiert:
+
+```bash
+# OpenAPI-Spec herunterladen
+curl -o openapi.yaml https://api.sevdesk.de/openapi.yaml
+
+# Generator ausfuehren
 python -m generator
 ```
 
-Dies generiert automatisch:
-- Models in `sevdeskapi/models/`
-- Converter in `sevdeskapi/converters/`
-- Controller in `sevdeskapi/controllers/`
+Patches fuer OpenAPI-Fehler: `generator/patches.yaml`
 
-Das wird zeitnah über Github Actions abgebildet!
+## Projektstruktur
 
-## Lizenz  / Haftungsausschluss
+```
+sevdesk/
+  controllers/      # Generierte Controller (Low-Level)
+  models/           # Generierte Pydantic Models
+  converters/       # Generierte Converter
+  helpers/          # High-Level Helper (manuell)
+  helpermodels/     # Erweiterte Models (manuell)
+  undocumented/     # Nicht-dokumentierte API-Endpoints
+    controllers/
+    models/
+generator/          # Code-Generator
+samples/            # Beispiel-Scripte
+```
 
-MIT License - Siehe LICENSE Datei
+## Lizenz
 
+MIT License
