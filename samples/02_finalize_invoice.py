@@ -2,7 +2,6 @@
 Sample 02: Rechnung fertigstellen und PDF holen
 
 - Bestehende Draft-Rechnung abrufen
-- Status auf "fertig" setzen
 - Rechnung rendern (PDF generieren)
 - PDF herunterladen
 """
@@ -20,12 +19,24 @@ if not api_key:
 
 sevdesk = Client(api_key)
 
-# --- Rechnung per ID oder Nummer finden ---
-# Entweder: invoice_id = 12345
-# Oder: Per Rechnungsnummer suchen
-invoice_number = os.getenv('TEST_INVOICE_NUMBER', '')
+# Status-Codes Referenz:
+#   100 = Draft (Entwurf)
+#   200 = Offen (fertig, nicht versendet)
+#   1000 = Versendet/Bezahlt
 
-if invoice_number:
+STATUS_MAP = {
+    '100': 'Draft',
+    '200': 'Offen',
+    '1000': 'Versendet/Bezahlt'
+}
+
+# --- Rechnung per ID oder Nummer finden ---
+invoice_number = os.getenv('TEST_INVOICE_NUMBER', '')
+invoice_id = os.getenv('TEST_INVOICE_ID', '')
+
+if invoice_id:
+    invoice_response = sevdesk.invoiceHelper.find_by_id(int(invoice_id))
+elif invoice_number:
     invoice_response = sevdesk.invoiceHelper.find_by_number(invoice_number)
 else:
     # Letzte Draft-Rechnung holen
@@ -39,23 +50,9 @@ if not invoice_response:
 
 invoice_id = int(invoice_response.id_)
 print(f"Rechnung gefunden: {invoice_response.invoiceNumber} (ID: {invoice_id})")
-print(f"  Aktueller Status: {invoice_response.status}")
+print(f"  Status: {invoice_response.status} ({STATUS_MAP.get(invoice_response.status, '?')})")
 
-# --- Status auf "fertig" setzen (status=200) ---
-# Status-Codes:
-#   100 = Draft (Entwurf)
-#   200 = Offen (fertig, aber nicht versendet)
-#   1000 = Versendet
-
-# Hinweis: Um den Status zu aendern nutzen wir die API direkt
-# da InvoiceExt fuer neue Rechnungen gedacht ist
-
-# Rechnung finalisieren - erst als offen markieren
-from sevdesk.models.invoice import Invoice
-update_body = Invoice(status="200")
-# sevdesk.invoice.updateInvoice(invoiceId=invoice_id, body=update_body)
-
-# Alternative: Rechnung rendern setzt Status automatisch
+# --- Rechnung rendern (PDF generieren) ---
 print("\nRendere Rechnung als PDF...")
 try:
     render_result = sevdesk.invoice.invoiceRender(invoiceId=invoice_id)
@@ -84,14 +81,6 @@ except Exception as e:
 # --- Aktualisierten Status pruefen ---
 updated_invoice = sevdesk.invoiceHelper.find_by_id(invoice_id)
 if updated_invoice:
-    print(f"\nAktualisierter Status: {updated_invoice.status}")
-    # Status-Bedeutung:
-    status_map = {
-        '100': 'Draft',
-        '200': 'Offen',
-        '1000': 'Versendet/Bezahlt'
-    }
-    status_text = status_map.get(updated_invoice.status, 'Unbekannt')
-    print(f"  ({status_text})")
+    print(f"\nStatus nach Render: {updated_invoice.status} ({STATUS_MAP.get(updated_invoice.status, '?')})")
 
 print("\nSample 02 abgeschlossen!")
