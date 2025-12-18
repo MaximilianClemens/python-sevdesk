@@ -7,7 +7,7 @@ class Dummy:
     pass
 
 # Importiere Helper
-from sevdesk.helpers import ContactHelper, InvoiceHelper, LetterHelper, BankHelper
+from sevdesk.helpers import ContactHelper, InvoiceHelper, LetterHelper, BankHelper, VoucherHelper
 
 class Client:
 
@@ -31,6 +31,7 @@ class Client:
         self.invoiceHelper = InvoiceHelper(self)
         self.letterHelper = LetterHelper(self)
         self.bankHelper = BankHelper(self)
+        self.voucherHelper = VoucherHelper(self)
 
 
     def _load_controllers(self, controllers_dir, target, module_path):
