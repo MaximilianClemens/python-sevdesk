@@ -173,12 +173,12 @@ class InvoiceHelper:
     def list(self, contact_id: Optional[int] = None, status: Optional[str] = None, limit: int = 100):
         """
         Listet Rechnungen auf.
-        
+
         Args:
             contact_id: Optional: nur für einen Kontakt
             status: Optional: filtere nach Status
             limit: Max. Anzahl (wird durch API begrenzt)
-            
+
         Returns:
             Liste von InvoiceResponse-Objekten
         """
@@ -190,3 +190,177 @@ class InvoiceHelper:
             return invoices[:limit] if invoices else []
         except Exception:
             return []
+
+    def get_positions(self, invoice_id: int) -> list:
+        """Ruft Positionen einer Rechnung ab"""
+        try:
+            return self.client.invoice.getInvoicePositionsById(invoice_id) or []
+        except Exception:
+            return []
+
+    def get_pdf(self, invoice_id: int, download: bool = True):
+        """Laedt PDF einer Rechnung herunter"""
+        try:
+            return self.client.invoice.invoiceGetPdf(invoice_id, download=download)
+        except Exception:
+            return None
+
+    def render(self, invoice_id: int):
+        """Rendert die Rechnung als PDF"""
+        try:
+            return self.client.invoice.invoiceRender(invoice_id)
+        except Exception:
+            return None
+
+    def finalize(self, invoice_id: int):
+        """
+        Finalisiert eine Rechnung (Status 200 = Offen).
+
+        Setzt Status auf 'Offen' und markiert als versendet.
+
+        Args:
+            invoice_id: ID der Rechnung
+
+        Returns:
+            InvoiceResponse oder None
+        """
+        try:
+            # Erst rendern
+            self.client.invoice.invoiceRender(invoice_id)
+            # Dann als versendet markieren (setzt Status auf 200)
+            return self.client.invoice.invoiceSendBy(invoice_id)
+        except Exception:
+            return None
+
+    def cancel(self, invoice_id: int):
+        """
+        Storniert eine Rechnung (erstellt Stornorechnung).
+
+        Args:
+            invoice_id: ID der Rechnung
+
+        Returns:
+            Stornorechnung (InvoiceResponse) oder None
+        """
+        try:
+            return self.client.invoice.cancelInvoice(invoice_id)
+        except Exception:
+            return None
+
+    def mark_as_sent(self, invoice_id: int):
+        """Markiert Rechnung als versendet"""
+        try:
+            return self.client.invoice.invoiceSendBy(invoice_id)
+        except Exception:
+            return None
+
+    def reset_to_draft(self, invoice_id: int) -> bool:
+        """Setzt Status zurueck auf Entwurf"""
+        try:
+            self.client.invoice.invoiceResetToDraft(invoice_id)
+            return True
+        except Exception:
+            return False
+
+    def reset_to_open(self, invoice_id: int) -> bool:
+        """Setzt Status zurueck auf Offen"""
+        try:
+            self.client.invoice.invoiceResetToOpen(invoice_id)
+            return True
+        except Exception:
+            return False
+
+    def enshrine(self, invoice_id: int) -> bool:
+        """Schreibt Rechnung fest (nicht mehr aenderbar)"""
+        try:
+            self.client.invoice.invoiceEnshrine(invoice_id)
+            return True
+        except Exception:
+            return False
+
+    def book(self, invoice_id: int) -> bool:
+        """Bucht die Rechnung"""
+        try:
+            self.client.invoice.bookInvoice(invoice_id)
+            return True
+        except Exception:
+            return False
+
+    def is_partially_paid(self, invoice_id: int) -> bool:
+        """Prueft ob Rechnung teilweise bezahlt ist"""
+        try:
+            result = self.client.invoice.getIsInvoicePartiallyPaid(invoice_id)
+            if isinstance(result, dict):
+                return result.get('objects', False)
+            return bool(result)
+        except Exception:
+            return False
+
+    def create_reminder(self, invoice_id: int):
+        """Erstellt eine Mahnung"""
+        try:
+            return self.client.invoice.createInvoiceReminder(
+                invoice_id=invoice_id,
+                invoice_objectName="Invoice"
+            )
+        except Exception:
+            return None
+
+    def get_xml(self, invoice_id: int):
+        """Ruft E-Rechnung XML ab (ZUGFeRD/XRechnung)"""
+        try:
+            return self.client.invoice.invoiceGetXml(invoice_id)
+        except Exception:
+            return None
+
+    def get_drafts(self):
+        """Ruft alle Entwuerfe ab (Status 100)"""
+        return self.list(status='100')
+
+    def get_open(self):
+        """Ruft alle offenen Rechnungen ab (Status 200)"""
+        return self.list(status='200')
+
+    def get_paid(self):
+        """Ruft alle bezahlten Rechnungen ab (Status 1000)"""
+        return self.list(status='1000')
+
+    def get_overdue(self):
+        """Ruft alle ueberfaelligen Rechnungen ab (Status 200 + ueberfaellig)"""
+        # Status 200 = Offen, muss clientseitig nach Faelligkeit gefiltert werden
+        open_invoices = self.get_open()
+        today = datetime.now()
+        overdue = []
+        for inv in open_invoices:
+            if inv.paymentDeadline:
+                try:
+                    deadline = datetime.strptime(inv.paymentDeadline[:10], "%Y-%m-%d")
+                    if deadline < today:
+                        overdue.append(inv)
+                except (ValueError, TypeError):
+                    pass
+        return overdue
+
+    def calculate_totals(self, invoices: list) -> dict:
+        """Berechnet Summen fuer eine Liste von Rechnungen"""
+        net = 0.0
+        tax = 0.0
+        gross = 0.0
+        paid = 0.0
+        for inv in invoices:
+            if inv.sumNet:
+                net += float(inv.sumNet)
+            if inv.sumTax:
+                tax += float(inv.sumTax)
+            if inv.sumGross:
+                gross += float(inv.sumGross)
+            if inv.paidAmount:
+                paid += float(inv.paidAmount)
+        return {
+            'net': net,
+            'tax': tax,
+            'gross': gross,
+            'paid': paid,
+            'open': gross - paid,
+            'count': len(invoices)
+        }
