@@ -1,0 +1,31 @@
+# OpenAPI Patches
+# Korrigiert Fehler in der offiziellen sevDesk OpenAPI-Spezifikation
+#
+# Format:
+#   schema_name:
+#     property_name:
+#       type: "corrected_type"
+#       description: "optional override"
+#
+# Hinweis: Diese Patches werden beim Generieren angewendet.
+# Bei Updates der openapi.yaml pruefen ob Patches noch noetig sind.
+
+# InvoicePosResponse: quantity ist als boolean definiert, ist aber string
+# API liefert: "1", "2", etc.
+# Reported: [TODO: Issue-Link wenn gemeldet]
+InvoicePosResponse:
+  quantity:
+    type: string
+    description: "Quantity of the article/part (fix: API returns string, not boolean)"
+
+# OrderPosResponse: gleicher Bug wie InvoicePosResponse
+OrderPosResponse:
+  quantity:
+    type: string
+    description: "Quantity of the article/part (fix: API returns string, not boolean)"
+
+# CreditNotePosResponse: gleicher Bug
+CreditNotePosResponse:
+  quantity:
+    type: string
+    description: "Quantity of the article/part (fix: API returns string, not boolean)"

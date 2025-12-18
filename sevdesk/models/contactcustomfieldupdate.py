@@ -5,9 +5,11 @@ from sevdesk.converters.contact import Contact
 from sevdesk.converters.contactcustomfieldsetting import ContactCustomFieldSetting
 
 class ContactCustomFieldUpdate(BaseModel):
-    contact: Optional[Contact] = None
-    contactCustomFieldSetting: Optional[ContactCustomFieldSetting] = None
-    value: Optional[str] = None
-    objectName: Optional[str] = None
+    """contact fields model"""
+
+    contact: Optional[Contact] = Field(default=None, description="name of the contact")
+    contactCustomFieldSetting: Optional[ContactCustomFieldSetting] = Field(default=None, description="name of the contact custom field setting")
+    value: Optional[str] = Field(default=None, description="The value of the contact field")
+    objectName: Optional[str] = Field(default=None, description="Internal object name which is 'ContactCustomField'.")
     class Config:
         populate_by_name = True

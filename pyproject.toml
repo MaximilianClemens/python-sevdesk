@@ -11,9 +11,7 @@ requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     { name = "Maximilian Clemens", email = "maximilian.clemens@gamma.red" },
-    { name = "Claude" },
-    { name = "ChatGPT" },
-    { name = "Copilot" },
+    { name = "Claude" }
 ]
 keywords = ["sevdesk", "api", "client", "accounting"]
 classifiers = [

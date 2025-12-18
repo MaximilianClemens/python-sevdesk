@@ -9,13 +9,22 @@ from sevdesk.converters.{{ prop.submodel.lower() }} import {{ prop.submodel }}
 {% endfor %}
 
 class {{ model.class_name }}(BaseModel):
+{% if model.description %}
+    """{{ model.description }}"""
+
+{% endif %}
 {% for prop in model.properties %}
     {% if prop.name != prop.original_name %}
-    {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = Field(default={{ prop.default }}, alias="{{ prop.original_name }}"){% else %} = Field(alias="{{ prop.original_name }}"){% endif %}
+    {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = Field(default={{ prop.default }}, alias="{{ prop.original_name }}"{% if prop.description %}, description="{{ prop.description }}"{% endif %}){% else %} = Field(alias="{{ prop.original_name }}"{% if prop.description %}, description="{{ prop.description }}"{% endif %}){% endif %}
+
+    {% else %}
+    {% if prop.description %}
+    {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = Field(default={{ prop.default }}, description="{{ prop.description }}"){% else %} = Field(description="{{ prop.description }}"){% endif %}
 
     {% else %}
     {{ prop.name }}: {{ prop.type }}{% if prop.default is not none %} = {{ prop.default }}{% endif %}
 
+    {% endif %}
     {% endif %}
 {% endfor %}
     class Config:

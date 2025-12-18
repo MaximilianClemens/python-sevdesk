@@ -6,6 +6,12 @@ from pathlib import Path
 class Dummy:
     pass
 
+# Importiere Helper
+from sevdesk.helpers import (
+    ContactHelper, InvoiceHelper, LetterHelper, BankHelper,
+    VoucherHelper, OrderHelper, CreditNoteHelper, PartHelper
+)
+
 class Client:
 
     def __init__(self, api_token, api_base='https://my.sevdesk.de/api/v1', session=None):
@@ -22,6 +28,16 @@ class Client:
         self.undocumented = Dummy()
         controllers_dir2 = Path(__file__).parent / "undocumented" / "controllers"
         self._load_controllers(controllers_dir2, self.undocumented, "sevdesk.undocumented.controllers")
+        
+        # Helper laden
+        self.contactHelper = ContactHelper(self)
+        self.invoiceHelper = InvoiceHelper(self)
+        self.letterHelper = LetterHelper(self)
+        self.bankHelper = BankHelper(self)
+        self.voucherHelper = VoucherHelper(self)
+        self.orderHelper = OrderHelper(self)
+        self.creditNoteHelper = CreditNoteHelper(self)
+        self.partHelper = PartHelper(self)
 
 
     def _load_controllers(self, controllers_dir, target, module_path):
@@ -40,12 +56,14 @@ class Client:
                 module = importlib.import_module(f"{module_path}.{controller_file.stem}")
                 
                 # Finde die Controller-Klasse im Modul (endet mit "Controller")
+                # Wichtig: Nur Klassen die IN DIESEM Modul definiert sind, nicht importierte
                 controller_class = None
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and 
-                        attr_name.endswith("Controller") and 
-                        attr_name != "BaseController"):
+                    if (isinstance(attr, type) and
+                        attr_name.endswith("Controller") and
+                        attr_name != "BaseController" and
+                        attr.__module__ == module.__name__):  # Nur aus diesem Modul!
                         controller_class = attr
                         break
                 
