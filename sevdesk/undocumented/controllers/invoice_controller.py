@@ -33,3 +33,8 @@ class InvoiceController(BaseInvoiceController):
             InvoiceResponse mit der gespeicherten Rechnung
         """
         return (yield)
+
+    @BaseController.delete("/Invoice/{invoiceId}")
+    def deleteInvoice(self, invoiceId: int):
+        """Delete an invoice (only draft invoices can be deleted)"""
+        return (yield)

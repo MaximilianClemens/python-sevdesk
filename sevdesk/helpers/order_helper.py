@@ -113,25 +113,31 @@ class OrderExt:
             pass
         raise RuntimeError("Kein SevUser gefunden. Bitte contactPerson_id angeben.")
 
-    def addPosition(self, name: str, quantity: float, price: float,
-                    taxRate: float = 19.0, text: str = None) -> 'OrderExt':
+    def addPosition(self, name: str, quantity: float, price: float = None,
+                    priceGross: float = None, taxRate: float = 19.0,
+                    text: str = None) -> 'OrderExt':
         """
         Fuegt eine Position hinzu.
 
         Args:
             name: Positionsname
             quantity: Menge
-            price: Einzelpreis
+            price: Einzelpreis (netto) - wird verwendet wenn priceGross nicht gesetzt
+            priceGross: Brutto-Einzelpreis - wenn gesetzt wird price ignoriert
             taxRate: Steuersatz (default: 19)
             text: Zusaetzlicher Text
 
         Returns:
             self (Method-Chaining)
         """
+        if priceGross is None and price is None:
+            raise ValueError("Entweder price oder priceGross muss angegeben werden")
+
         self._pending_positions.append({
             'name': name,
             'quantity': quantity,
             'price': price,
+            'priceGross': priceGross,
             'taxRate': taxRate,
             'text': text
         })
@@ -182,11 +188,15 @@ class OrderExt:
                     "objectName": "OrderPos",
                     "mapAll": "true",
                     "quantity": pos['quantity'],
-                    "price": pos['price'],
                     "name": pos['name'],
                     "unity": {"id": 1, "objectName": "Unity"},
                     "taxRate": pos.get('taxRate', 19.0),
                 }
+                # Verwende priceGross wenn vorhanden, sonst price (netto)
+                if pos.get('priceGross') is not None:
+                    pos_dict["priceGross"] = pos['priceGross']
+                elif pos.get('price') is not None:
+                    pos_dict["price"] = pos['price']
                 if pos.get('text'):
                     pos_dict["text"] = pos['text']
                 order_pos_save.append(pos_dict)

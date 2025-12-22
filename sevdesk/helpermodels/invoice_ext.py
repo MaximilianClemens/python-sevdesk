@@ -43,24 +43,31 @@ class InvoiceExt(InvoiceBase):
         self._saved_id = invoice_id
         return self
 
-    def addPosition(self, name: str, quantity: float, price: float, taxRate: float = 19.0, text: str = None) -> 'InvoiceExt':
+    def addPosition(self, name: str, quantity: float, price: float = None,
+                    priceGross: float = None, taxRate: float = 19.0,
+                    text: str = None) -> 'InvoiceExt':
         """
         Fuegt eine Position zur Rechnung hinzu (vor dem Speichern).
 
         Args:
             name: Name der Position
             quantity: Menge
-            price: Einzelpreis
+            price: Einzelpreis (netto) - wird verwendet wenn priceGross nicht gesetzt
+            priceGross: Brutto-Einzelpreis - wenn gesetzt wird price ignoriert
             taxRate: Steuersatz (default: 19)
             text: Zusaetzlicher Text (optional)
 
         Returns:
             self (fuer Method-Chaining)
         """
+        if priceGross is None and price is None:
+            raise ValueError("Entweder price oder priceGross muss angegeben werden")
+
         position = {
             "name": name,
             "quantity": quantity,
             "price": price,
+            "priceGross": priceGross,
             "taxRate": taxRate,
         }
         if text:
@@ -117,18 +124,25 @@ class InvoiceExt(InvoiceBase):
             raise RuntimeError("Rechnung muss zuerst gespeichert werden")
 
         for pos_data in self._pending_positions:
-            # InvoicePos-Objekt erstellen
-            invoice_pos = InvoicePos(
-                objectName="InvoicePos",
-                invoice=Invoice(id_=self._saved_id, objectName="Invoice"),
-                quantity=pos_data["quantity"],
-                price=pos_data["price"],
-                name=pos_data["name"],
-                unity=Unity(id_=1, objectName="Unity"),  # 1 = Stueck
-                taxRate=pos_data.get("taxRate", 19.0),
-                text=pos_data.get("text"),
-                mapAll=True
-            )
+            # InvoicePos-Objekt erstellen - verwende priceGross wenn vorhanden
+            pos_kwargs = {
+                "objectName": "InvoicePos",
+                "invoice": Invoice(id_=self._saved_id, objectName="Invoice"),
+                "quantity": pos_data["quantity"],
+                "name": pos_data["name"],
+                "unity": Unity(id_=1, objectName="Unity"),  # 1 = Stueck
+                "taxRate": pos_data.get("taxRate", 19.0),
+                "text": pos_data.get("text"),
+                "mapAll": True
+            }
+
+            # Verwende priceGross wenn vorhanden, sonst price (netto)
+            if pos_data.get("priceGross") is not None:
+                pos_kwargs["priceGross"] = pos_data["priceGross"]
+            elif pos_data.get("price") is not None:
+                pos_kwargs["price"] = pos_data["price"]
+
+            invoice_pos = InvoicePos(**pos_kwargs)
 
             # Position ueber Controller speichern
             try:

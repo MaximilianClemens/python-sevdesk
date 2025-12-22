@@ -236,6 +236,9 @@ class InvoiceHelper:
         """
         Storniert eine Rechnung (erstellt Stornorechnung).
 
+        WICHTIG: Nur offene Rechnungen (Status 200) koennen storniert werden!
+        Fuer Draft-Rechnungen (Status 100) verwenden Sie delete() stattdessen.
+
         Args:
             invoice_id: ID der Rechnung
 
@@ -246,6 +249,25 @@ class InvoiceHelper:
             return self.client.invoice.cancelInvoice(invoice_id)
         except Exception:
             return None
+
+    def delete(self, invoice_id: int) -> bool:
+        """
+        Loescht eine Rechnung.
+
+        WICHTIG: Nur Draft-Rechnungen (Status 100) koennen geloescht werden!
+        Fuer offene/versendete Rechnungen (Status 200) verwenden Sie cancel() stattdessen.
+
+        Args:
+            invoice_id: ID der Rechnung
+
+        Returns:
+            True wenn erfolgreich, False bei Fehler
+        """
+        try:
+            self.client.invoice.deleteInvoice(invoice_id)
+            return True
+        except Exception:
+            return False
 
     def mark_as_sent(self, invoice_id: int):
         """Markiert Rechnung als versendet"""
