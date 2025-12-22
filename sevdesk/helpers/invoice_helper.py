@@ -212,7 +212,7 @@ class InvoiceHelper:
         except Exception:
             return None
 
-    def finalize(self, invoice_id: int):
+    def finalize(self, invoice_id: int, send_type: str = "VPR"):
         """
         Finalisiert eine Rechnung (Status 200 = Offen).
 
@@ -220,6 +220,7 @@ class InvoiceHelper:
 
         Args:
             invoice_id: ID der Rechnung
+            send_type: Art des Versands ("VPR", "VP", "VPDF", "VM")
 
         Returns:
             InvoiceResponse oder None
@@ -228,8 +229,10 @@ class InvoiceHelper:
             # Erst rendern
             self.client.invoice.invoiceRender(invoice_id)
             # Dann als versendet markieren (setzt Status auf 200)
-            return self.client.invoice.invoiceSendBy(invoice_id)
-        except Exception:
+            # Verwende undocumented Controller mit sendType
+            return self.client.undocumented.invoice.invoiceSendByWithType(invoice_id, sendType=send_type)
+        except Exception as e:
+            print(f"Finalize error: {e}")
             return None
 
     def cancel(self, invoice_id: int):

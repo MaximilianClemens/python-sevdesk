@@ -149,10 +149,10 @@ class ContactHelper:
     def get_by_id(self, contact_id: int):
         """
         Ruft einen Kontakt per ID ab.
-        
+
         Args:
             contact_id: ID des Kontakts
-            
+
         Returns:
             ContactResponse
         """
@@ -160,3 +160,91 @@ class ContactHelper:
         if isinstance(result, list) and len(result) > 0:
             return result[0]
         return result
+
+    def add_address(
+        self,
+        contact_id: int,
+        street: str,
+        zip_code: str,
+        city: str,
+        country_id: int = 1,
+        category_id: int = 43,
+        name: str = None
+    ):
+        """
+        Fuegt eine Adresse zu einem Kontakt hinzu.
+
+        Args:
+            contact_id: ID des Kontakts
+            street: Strasse und Hausnummer
+            zip_code: Postleitzahl
+            city: Stadt
+            country_id: Land-ID (1=Deutschland)
+            category_id: Adress-Kategorie (43=Rechnungsadresse, 47=Lieferadresse)
+            name: Zusaetzlicher Name in der Adresse
+
+        Returns:
+            ContactAddressResponse oder None bei Fehler
+        """
+        from sevdesk.models.contactaddress import ContactAddress
+        from sevdesk.converters.contact import Contact
+        from sevdesk.converters.country import Country
+        from sevdesk.converters.category import Category
+
+        try:
+            address = ContactAddress(
+                contact=Contact(id_=contact_id, objectName="Contact"),
+                street=street,
+                zip=zip_code,
+                city=city,
+                country=Country(id_=country_id, objectName="StaticCountry"),
+                category=Category(id_=category_id, objectName="Category"),
+                name=name,
+            )
+
+            result = self.client.contactaddress.createContactAddress(body=address)
+            return result
+        except Exception as e:
+            print(f"ContactHelper.add_address error: {e}")
+            return None
+
+    def get_addresses(self, contact_id: int):
+        """
+        Ruft alle Adressen eines Kontakts ab.
+
+        Args:
+            contact_id: ID des Kontakts
+
+        Returns:
+            Liste von ContactAddressResponse
+        """
+        try:
+            # Alle Adressen abrufen und nach Kontakt filtern
+            addresses = self.client.contactaddress.getContactAddresses()
+            if not addresses:
+                return []
+
+            contact_addresses = []
+            for addr in addresses:
+                if hasattr(addr, 'contact') and addr.contact:
+                    addr_contact_id = getattr(addr.contact, 'id_', getattr(addr.contact, 'id', None))
+                    if addr_contact_id and int(addr_contact_id) == contact_id:
+                        contact_addresses.append(addr)
+
+            return contact_addresses
+        except Exception as e:
+            print(f"ContactHelper.get_addresses error: {e}")
+            return []
+
+    def has_address(self, contact_id: int) -> bool:
+        """
+        Prueft ob ein Kontakt mindestens eine Adresse hat.
+
+        Args:
+            contact_id: ID des Kontakts
+
+        Returns:
+            True wenn Adresse vorhanden
+        """
+        addresses = self.get_addresses(contact_id)
+        return len(addresses) > 0

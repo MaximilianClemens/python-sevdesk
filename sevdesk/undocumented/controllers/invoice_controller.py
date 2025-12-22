@@ -38,3 +38,23 @@ class InvoiceController(BaseInvoiceController):
     def deleteInvoice(self, invoiceId: int):
         """Delete an invoice (only draft invoices can be deleted)"""
         return (yield)
+
+    @BaseController.put("/Invoice/{invoiceId}/sendBy")
+    def invoiceSendByWithType(self, invoiceId: int, sendType: str = "VPR") -> InvoiceResponse:
+        """
+        Mark invoice as sent with sendType parameter.
+
+        Die offizielle API benoetigt sendType, aber der generierte Controller hat diesen nicht.
+
+        Args:
+            invoiceId: ID der Rechnung
+            sendType: Art des Versands:
+                - "VPR" = Versand per Post (default)
+                - "VP" = Portal
+                - "VPDF" = PDF
+                - "VM" = E-Mail
+
+        Returns:
+            InvoiceResponse mit aktualisierter Rechnung
+        """
+        return (yield)
