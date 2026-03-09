@@ -2,7 +2,7 @@
 sevDesk API Code Generator
 
 Generiert Python Models und Controllers aus der OpenAPI-Spezifikation.
-Unterstuetzt Patches fuer Korrekturen an der offiziellen Spec.
+Unterstuetzt Patches für Korrekturen an der offiziellen Spec.
 """
 
 import yaml
@@ -54,7 +54,7 @@ def apply_patches(schemas: dict, patches: dict) -> dict:
                 break
 
         if not target_schema:
-            print(f"  Warnung: Schema '{schema_name}' nicht gefunden fuer Patch")
+            print(f"  Warnung: Schema '{schema_name}' nicht gefunden für Patch")
             continue
 
         properties = target_schema.get("properties", {})
@@ -82,7 +82,7 @@ def sanitize_field_name(name: str) -> str:
 
 
 def sanitize_description(desc: str) -> str:
-    """Bereinigt Description fuer Python-Strings"""
+    """Bereinigt Description für Python-Strings"""
     if not desc:
         return ""
     # Newlines und problematische Zeichen entfernen/ersetzen
@@ -323,7 +323,7 @@ def generate_controllers(openapi_spec: dict, env: Environment):
                 model_ref = resolve_ref(ref)
                 imports.add(model_ref)
 
-            # Parameter pruefen
+            # Parameter prüfen
             params = []
             for p in op.get("parameters", []):
                 param_required = p.get("required", False)

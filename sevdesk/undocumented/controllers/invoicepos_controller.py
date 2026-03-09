@@ -11,7 +11,7 @@ from sevdesk.models.invoiceposresponse import InvoicePosResponse
 
 
 class InvoicePosController(BaseController):
-    """Controller fuer Rechnungspositionen (undokumentierte Endpoints)."""
+    """Controller für Rechnungspositionen (undokumentierte Endpoints)."""
 
     @BaseController.post("/InvoicePos")
     def createInvoicePos(self, body: InvoicePos) -> InvoicePosResponse:

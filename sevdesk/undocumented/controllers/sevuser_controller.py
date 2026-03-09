@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 
 class SevUserController(BaseController):
-    """Controller fuer SevUser-Operationen (undocumented API)"""
+    """Controller für SevUser-Operationen (undocumented API)"""
 
     @BaseController.get("/SevUser")
     def getSevUsers(self, limit: Optional[int] = None, offset: Optional[int] = None) -> list[dict]:

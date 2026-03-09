@@ -3,7 +3,7 @@ OrderHelper - High-Level Angebots-/Auftrags-Verwaltung
 
 Order-Typen in sevDesk:
 - AN = Angebot (Estimate/Proposal)
-- AB = Auftragsbestaetigung (Order Confirmation)
+- AB = Auftragsbestätigung (Order Confirmation)
 - LI = Lieferschein (Delivery Note)
 
 Beispiele:
@@ -38,7 +38,7 @@ from sevdesk.converters.taxrule import TaxRule
 # Order Types
 ORDER_TYPES = {
     'AN': 'Angebot (Estimate)',
-    'AB': 'Auftragsbestaetigung (Order Confirmation)',
+    'AB': 'Auftragsbestätigung (Order Confirmation)',
     'LI': 'Lieferschein (Delivery Note)',
 }
 
@@ -260,7 +260,7 @@ class OrderExt:
 
 
 class OrderHelper:
-    """Helper-Klasse fuer Order-Operationen"""
+    """Helper-Klasse für Order-Operationen"""
 
     def __init__(self, client):
         self.client = client
@@ -291,7 +291,7 @@ class OrderHelper:
         Args:
             contact: Contact-Objekt oder ID
             orderNumber: Angebots-/Auftragsnummer
-            orderType: 'AN'=Angebot, 'AB'=Auftragsbestaetigung, 'LI'=Lieferschein
+            orderType: 'AN'=Angebot, 'AB'=Auftragsbestätigung, 'LI'=Lieferschein
             orderDate: Datum (default: heute)
             status: '100'=Draft
             contactPerson_id: SevUser-ID (optional)
@@ -369,7 +369,7 @@ class OrderHelper:
         return self.list(contact_id=contact_id, order_type='AN')
 
     def get_confirmations(self, contact_id: int = None) -> List[OrderResponse]:
-        """Ruft alle Auftragsbestaetigungen ab"""
+        """Ruft alle Auftragsbestätigungen ab"""
         return self.list(contact_id=contact_id, order_type='AB')
 
     def get_delivery_notes(self, contact_id: int = None) -> List[OrderResponse]:
@@ -398,11 +398,11 @@ class OrderHelper:
             return None
 
     def get_status_label(self, status: str) -> str:
-        """Gibt Status-Label zurueck"""
+        """Gibt Status-Label zurück"""
         return ORDER_STATUS.get(str(status), f'Unknown ({status})')
 
     def get_type_label(self, order_type: str) -> str:
-        """Gibt Typ-Label zurueck"""
+        """Gibt Typ-Label zurück"""
         return ORDER_TYPES.get(order_type, f'Unknown ({order_type})')
 
     def calculate_totals(self, orders: List[OrderResponse]) -> dict:

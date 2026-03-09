@@ -2,7 +2,7 @@
 InvoiceExt - Erweiterte Invoice-Klasse mit High-Level Funktionen
 
 Diese Klasse erweitert das Standard-Invoice-Modell mit praktischen Methoden:
-- addPosition() - Positionen hinzufuegen
+- addPosition() - Positionen hinzufügen
 - save() - Als Draft oder fertig speichern
 - getPDF() - PDF generieren
 - render() - Als PDF rendern
@@ -23,7 +23,7 @@ class InvoiceExt(InvoiceBase):
         pdf_url = invoice.getPDF()
     """
 
-    # Store fuer noch nicht gespeicherte Positionen
+    # Store für noch nicht gespeicherte Positionen
     _pending_positions: List[dict] = []
     _client = None
     _saved_id = None
@@ -59,7 +59,7 @@ class InvoiceExt(InvoiceBase):
             text: Zusaetzlicher Text (optional)
 
         Returns:
-            self (fuer Method-Chaining)
+            self (für Method-Chaining)
         """
         if priceGross is None and price is None:
             raise ValueError("Entweder price oder priceGross muss angegeben werden")
@@ -95,7 +95,7 @@ class InvoiceExt(InvoiceBase):
                    '1000' = Fertig (default API status)
 
         Returns:
-            self mit gesetzter ID (fuer Method-Chaining)
+            self mit gesetzter ID (für Method-Chaining)
         """
         if not self._client:
             raise RuntimeError("Client nicht gesetzt. Verwende InvoiceHelper.new() oder setzen Sie _set_client()")
@@ -103,7 +103,7 @@ class InvoiceExt(InvoiceBase):
         # Invoice-Model vorbereiten mit aktuellem Status
         self.status = status
 
-        # Ueber undocumented Controller speichern
+        # Über undocumented Controller speichern
         result = self._client.undocumented.invoice.createInvoice(body=self)
 
         # ID aus Response extrahieren
@@ -117,7 +117,7 @@ class InvoiceExt(InvoiceBase):
         if not self._saved_id:
             raise RuntimeError("Konnte Invoice-ID nicht aus Response extrahieren")
 
-        # Positionen hinzufuegen, falls vorhanden
+        # Positionen hinzufügen, falls vorhanden
         if self._pending_positions:
             self._save_positions()
 
@@ -150,7 +150,7 @@ class InvoiceExt(InvoiceBase):
 
             invoice_pos = InvoicePos(**pos_kwargs)
 
-            # Position ueber Controller speichern
+            # Position über Controller speichern
             try:
                 self._client.undocumented.invoicepos.createInvoicePos(body=invoice_pos)
             except Exception as e:

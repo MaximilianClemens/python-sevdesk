@@ -11,7 +11,7 @@ from sevdesk.models.orderposresponse import OrderPosResponse
 
 
 class OrderPosController(BaseController):
-    """Controller fuer Auftragspositionen (undokumentierte Endpoints)."""
+    """Controller für Auftragspositionen (undokumentierte Endpoints)."""
 
     @BaseController.post("/OrderPos")
     def createOrderPos(self, body: OrderPos) -> OrderPosResponse:

@@ -65,7 +65,7 @@ if balance is not None:
     print(f"  Kontostand am {today}: {balance:,.2f} EUR")
 else:
     print(f"  Kontostand konnte nicht ermittelt werden")
-    print("  (Moeglicherweise nicht verfuegbar fuer diesen Kontotyp)")
+    print("  (Moeglicherweise nicht verfuegbar für diesen Kontotyp)")
 
 # --- Transaktionen der letzten 30 Tage ---
 print("\n=== Transaktionen (letzte 30 Tage) ===\n")
@@ -93,7 +93,7 @@ else:
 
         print(f"  {date_str} | {amount_display:>12} EUR | {t.payeePayerName or '-'}")
         if t.paymtPurpose:
-            # Verwendungszweck kuerzen
+            # Verwendungszweck kürzen
             purpose = t.paymtPurpose[:50] + "..." if len(t.paymtPurpose) > 50 else t.paymtPurpose
             print(f"             {purpose}")
         print()

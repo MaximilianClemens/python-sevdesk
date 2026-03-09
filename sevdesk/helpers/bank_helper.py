@@ -26,7 +26,7 @@ from sevdesk.models.checkaccounttransactionresponse import CheckAccountTransacti
 
 
 class BankHelper:
-    """Helper-Klasse fuer Bank-Operationen auf hohem Level"""
+    """Helper-Klasse für Bank-Operationen auf hohem Level"""
 
     def __init__(self, client):
         self.client = client
@@ -36,7 +36,7 @@ class BankHelper:
         Ruft alle Bankkonten ab.
 
         Args:
-            active_only: Nur aktive Konten (Status 100) zurueckgeben
+            active_only: Nur aktive Konten (Status 100) zurückgeben
 
         Returns:
             Liste von CheckAccountResponse-Objekten
@@ -285,7 +285,7 @@ class BankHelper:
         transactions: List[CheckAccountTransactionResponse]
     ) -> dict:
         """
-        Berechnet Summen fuer eine Liste von Transaktionen.
+        Berechnet Summen für eine Liste von Transaktionen.
 
         Args:
             transactions: Liste von Transaktionen

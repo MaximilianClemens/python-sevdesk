@@ -52,7 +52,7 @@ print("\nErstelle Brief...")
 brief_text = """
 <p><strong>Sehr geehrte Damen und Herren,</strong></p>
 
-<p>vielen Dank fuer Ihr Interesse an unseren Dienstleistungen.</p>
+<p>vielen Dank für Ihr Interesse an unseren Dienstleistungen.</p>
 
 <p>Gerne moechten wir Ihnen folgendes Angebot unterbreiten:</p>
 
@@ -70,13 +70,13 @@ Ihr Team</p>
 
 # Adresse des Empfaengers
 empfaenger_adresse = """Test Kunde
-Musterstrasse 123
+Musterstraße 123
 12345 Musterstadt"""
 
 # Brief erstellen - contactPerson_id ist optional!
 letter = sevdesk.letterHelper.new(
     contact=contact,
-    header="Angebot fuer IT-Dienstleistungen",
+    header="Angebot für IT-Dienstleistungen",
     text=brief_text,
     address=empfaenger_adresse,
     contactPerson_id=SEV_USER_ID,  # None wenn nicht gesetzt -> automatisch
@@ -109,8 +109,8 @@ if pdf_content:
 else:
     print("  Kein PDF-Inhalt erhalten")
 
-# --- Alle Briefe fuer Kontakt auflisten ---
-print(f"\nBriefe fuer Kontakt {contact.id_}:")
+# --- Alle Briefe für Kontakt auflisten ---
+print(f"\nBriefe für Kontakt {contact.id_}:")
 letters = sevdesk.letterHelper.list(contact_id=int(contact.id_), limit=5)
 
 for l in letters:

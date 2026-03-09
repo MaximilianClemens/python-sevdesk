@@ -4,7 +4,7 @@ Sample 09: Artikel/Produkte (Parts) verwalten
 - Artikel erstellen
 - Nach Nummer/Name suchen
 - Preis aktualisieren
-- Lagerbestand pruefen
+- Lagerbestand prüfen
 - Alle Artikel auflisten
 """
 

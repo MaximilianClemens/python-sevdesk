@@ -83,7 +83,7 @@ class LetterExt:
         Speichert den Brief auf sevDesk.
 
         Returns:
-            self mit gesetzter ID (fuer Method-Chaining)
+            self mit gesetzter ID (für Method-Chaining)
         """
         if not self._client:
             raise RuntimeError("Client nicht gesetzt")
@@ -119,7 +119,7 @@ class LetterExt:
         Rendert den Brief als PDF.
 
         Returns:
-            self (fuer Method-Chaining)
+            self (für Method-Chaining)
         """
         if not self._saved_id:
             raise RuntimeError("Brief muss zuerst gespeichert werden (save())")
@@ -159,7 +159,7 @@ class LetterExt:
             value: Neuer Wert
 
         Returns:
-            self (fuer Method-Chaining)
+            self (für Method-Chaining)
         """
         if not self._saved_id:
             raise RuntimeError("Brief muss zuerst gespeichert werden (save())")
@@ -180,7 +180,7 @@ class LetterExt:
             sendType: Versandart (default: VPDF)
 
         Returns:
-            self (fuer Method-Chaining)
+            self (für Method-Chaining)
         """
         if not self._saved_id:
             raise RuntimeError("Brief muss zuerst gespeichert werden (save())")
@@ -198,7 +198,7 @@ class LetterExt:
 
 
 class LetterHelper:
-    """Helper-Klasse fuer Brief-Operationen auf hohem Level"""
+    """Helper-Klasse für Brief-Operationen auf hohem Level"""
 
     def __init__(self, client):
         self.client = client
@@ -258,7 +258,7 @@ class LetterHelper:
         Listet Briefe auf.
 
         Args:
-            contact_id: Optional: nur fuer einen Kontakt
+            contact_id: Optional: nur für einen Kontakt
             limit: Max. Anzahl
 
         Returns:

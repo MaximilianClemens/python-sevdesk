@@ -78,7 +78,7 @@ try:
 except Exception as e:
     print(f"  PDF-Download fehlgeschlagen: {e}")
 
-# --- Aktualisierten Status pruefen ---
+# --- Aktualisierten Status prüfen ---
 updated_invoice = sevdesk.invoiceHelper.find_by_id(invoice_id)
 if updated_invoice:
     print(f"\nStatus nach Render: {updated_invoice.status} ({STATUS_MAP.get(updated_invoice.status, '?')})")

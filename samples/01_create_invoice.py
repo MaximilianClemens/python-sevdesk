@@ -2,7 +2,7 @@
 Sample 01: Rechnung erstellen und Preise abrufen
 
 - Rechnung als Draft erstellen
-- Positionen hinzufuegen
+- Positionen hinzufügen
 - Rechnungsnummer automatisch von sevDesk
 - Datum automatisch (heute)
 - ID der neuen Rechnung ausgeben
@@ -49,7 +49,7 @@ invoice = sevdesk.invoiceHelper.new(
     timeToPay=14
 )
 
-# --- Positionen hinzufuegen ---
+# --- Positionen hinzufügen ---
 invoice.addPosition(
     name='Beratungsleistung',
     quantity=2,

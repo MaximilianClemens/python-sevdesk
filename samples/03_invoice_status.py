@@ -33,7 +33,7 @@ STATUS_CODES = {
 # - sendDate != None = Versendet
 
 def get_invoice_status_details(invoice):
-    """Gibt detaillierte Status-Informationen zurueck."""
+    """Gibt detaillierte Status-Informationen zurück."""
     status_code = invoice.status
     status_text = STATUS_CODES.get(status_code, f'Unbekannt ({status_code})')
 

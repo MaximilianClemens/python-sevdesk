@@ -1,7 +1,7 @@
 """
 VoucherHelper - High-Level Beleg/Ausgaben-Verwaltung
 
-Voucher in sevDesk sind Belege fuer Ausgaben (Eingangsrechnungen, Quittungen, etc.)
+Voucher in sevDesk sind Belege für Ausgaben (Eingangsrechnungen, Quittungen, etc.)
 
 Beispiele:
     # Alle Belege auflisten
@@ -51,7 +51,7 @@ CREDIT_DEBIT = {
 
 
 class VoucherHelper:
-    """Helper-Klasse fuer Voucher/Beleg-Operationen auf hohem Level"""
+    """Helper-Klasse für Voucher/Beleg-Operationen auf hohem Level"""
 
     def __init__(self, client):
         self.client = client
@@ -71,7 +71,7 @@ class VoucherHelper:
         Args:
             supplier_id: Lieferanten-ID (Contact-ID)
             status: Status-Filter ('draft', 'open', 'partial', 'paid' oder Status-Code)
-            credit_debit: 'C' fuer Gutschriften, 'D' fuer Belastungen
+            credit_debit: 'C' für Gutschriften, 'D' für Belastungen
             start_date: Startdatum (YYYY-MM-DD oder Timestamp)
             end_date: Enddatum (YYYY-MM-DD oder Timestamp)
             description: Beschreibung/Belegnummer (Like-Suche)
@@ -253,7 +253,7 @@ class VoucherHelper:
 
     def calculate_totals(self, vouchers: List[VoucherResponse]) -> dict:
         """
-        Berechnet Summen fuer eine Liste von Belegen.
+        Berechnet Summen für eine Liste von Belegen.
 
         Args:
             vouchers: Liste von VoucherResponse-Objekten
@@ -288,7 +288,7 @@ class VoucherHelper:
 
     def get_status_label(self, status: str) -> str:
         """
-        Gibt das deutsche Label fuer einen Status-Code zurueck.
+        Gibt das deutsche Label für einen Status-Code zurück.
 
         Args:
             status: Status-Code (z.B. '100')
@@ -340,7 +340,7 @@ class VoucherHelper:
     def _date_to_timestamp(self, date_str: str) -> Optional[int]:
         """Konvertiert ein Datum (YYYY-MM-DD) in Unix-Timestamp"""
         try:
-            # Pruefen ob schon Timestamp
+            # Prüfen ob schon Timestamp
             if date_str.isdigit():
                 return int(date_str)
             # YYYY-MM-DD parsen

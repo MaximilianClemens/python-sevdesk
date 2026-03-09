@@ -50,7 +50,7 @@ UNITY_IDS = {
 
 
 class PartHelper:
-    """Helper-Klasse fuer Artikel-Operationen"""
+    """Helper-Klasse für Artikel-Operationen"""
 
     def __init__(self, client):
         self.client = client
@@ -271,5 +271,5 @@ class PartHelper:
         )
 
     def get_status_label(self, status: int) -> str:
-        """Gibt Status-Label zurueck"""
+        """Gibt Status-Label zurück"""
         return PART_STATUS.get(status, f'Unknown ({status})')

@@ -31,7 +31,7 @@ CREDITNOTE_STATUS = {
 
 
 class CreditNoteHelper:
-    """Helper-Klasse fuer Gutschriften-Operationen"""
+    """Helper-Klasse für Gutschriften-Operationen"""
 
     def __init__(self, client):
         self.client = client
@@ -131,7 +131,7 @@ class CreditNoteHelper:
             return None
 
     def reset_to_draft(self, creditnote_id: int) -> bool:
-        """Setzt Status zurueck auf Entwurf"""
+        """Setzt Status zurück auf Entwurf"""
         try:
             self.client.creditnote.creditNoteResetToDraft(creditnote_id)
             return True
@@ -139,7 +139,7 @@ class CreditNoteHelper:
             return False
 
     def reset_to_open(self, creditnote_id: int) -> bool:
-        """Setzt Status zurueck auf Offen"""
+        """Setzt Status zurück auf Offen"""
         try:
             self.client.creditnote.creditNoteResetToOpen(creditnote_id)
             return True
@@ -163,7 +163,7 @@ class CreditNoteHelper:
             return False
 
     def get_status_label(self, status: str) -> str:
-        """Gibt Status-Label zurueck"""
+        """Gibt Status-Label zurück"""
         return CREDITNOTE_STATUS.get(str(status), f'Unknown ({status})')
 
     def calculate_totals(self, creditnotes: List[CreditNoteResponse]) -> dict:

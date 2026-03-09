@@ -44,7 +44,7 @@ class InvoiceController(BaseInvoiceController):
         """
         Mark invoice as sent with sendType parameter.
 
-        Die offizielle API benoetigt sendType, aber der generierte Controller hat diesen nicht.
+        Die offizielle API benötigt sendType, aber der generierte Controller hat diesen nicht.
 
         Args:
             invoiceId: ID der Rechnung

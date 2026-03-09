@@ -176,7 +176,7 @@ class ContactHelper:
 
         Args:
             contact_id: ID des Kontakts
-            street: Strasse und Hausnummer
+            street: Straße und Hausnummer
             zip_code: Postleitzahl
             city: Stadt
             country_id: Land-ID (1=Deutschland)

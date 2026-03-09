@@ -27,9 +27,9 @@ Inoffizieller Python-Client fuer die sevDesk Buchhaltungs-API. Generiert Models/
 
 ```
 sevdesk/
-  controllers/      # GENERIERT - nicht manuell aendern
-  models/           # GENERIERT - nicht manuell aendern
-  converters/       # GENERIERT - nicht manuell aendern
+  controllers/      # GENERIERT - nicht manuell ändern
+  models/           # GENERIERT - nicht manuell ändern
+  converters/       # GENERIERT - nicht manuell ändern
   helpers/          # MANUELL - High-Level API
   helpermodels/     # MANUELL - Erweiterte Models
   undocumented/     # MANUELL - Nicht in OpenAPI dokumentierte Endpoints
@@ -94,7 +94,7 @@ python -m generator
 
 ## Konventionen
 
-- Generierte Dateien (`controllers/`, `models/`, `converters/`) NIE manuell aendern
+- Generierte Dateien (`controllers/`, `models/`, `converters/`) NIE manuell ändern
 - Manuelle Erweiterungen in `helpers/`, `helpermodels/`, `undocumented/`
 - Samples nutzen `load_dotenv()` und `.env` fuer API-Key
 - Deutsche Kommentare in manuellen Dateien OK
@@ -107,11 +107,11 @@ python -m generator
 
 ## Typische Aufgaben
 
-### Neuen Helper hinzufuegen
+### Neuen Helper hinzufügen
 
 1. Datei in `sevdesk/helpers/` erstellen
 2. In `sevdesk/helpers/__init__.py` exportieren
-3. In `sevdesk/client.py` als Attribut hinzufuegen
+3. In `sevdesk/client.py` als Attribut hinzufügen
 4. Sample in `samples/` erstellen
 
 ### Neuen undocumented Controller
@@ -122,5 +122,5 @@ python -m generator
 
 ### OpenAPI-Fehler fixen
 
-1. Patch in `generator/patches.yaml` hinzufuegen
+1. Patch in `generator/patches.yaml` hinzufügen
 2. Generator neu ausfuehren

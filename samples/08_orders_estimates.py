@@ -3,12 +3,12 @@ Sample 08: Angebote (Orders) verwalten
 
 Order-Typen:
 - AN = Angebot (Estimate)
-- AB = Auftragsbestaetigung (Order Confirmation)
+- AB = Auftragsbestätigung (Order Confirmation)
 - LI = Lieferschein (Delivery Note)
 
 - Angebot erstellen mit Positionen
 - PDF generieren
-- Status aendern
+- Status ändern
 - Alle Angebote auflisten
 """
 
@@ -46,12 +46,12 @@ order = sevdesk.orderHelper.new(
     contact=contact,
     orderNumber=order_number,
     orderType='AN',  # Angebot
-    header='Angebot fuer IT-Dienstleistungen',
-    headText='<p>Vielen Dank fuer Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:</p>',
-    footText='<p>Dieses Angebot ist 30 Tage gueltig.</p>',
+    header='Angebot für IT-Dienstleistungen',
+    headText='<p>Vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:</p>',
+    footText='<p>Dieses Angebot ist 30 Tage gültig.</p>',
 )
 
-# Positionen hinzufuegen (Method Chaining)
+# Positionen hinzufügen (Method Chaining)
 order.addPosition('Beratung', quantity=10, price=150.00, taxRate=19.0)
 order.addPosition('Entwicklung', quantity=20, price=120.00, taxRate=19.0)
 order.addPosition('Projektmanagement', quantity=5, price=100.00, taxRate=19.0)

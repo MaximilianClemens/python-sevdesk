@@ -149,7 +149,7 @@ vouchers = client.voucher.getVouchers()
 |--------|--------------|
 | `01_create_invoice.py` | Rechnung mit Positionen erstellen |
 | `02_finalize_invoice.py` | Rechnung finalisieren und PDF |
-| `03_invoice_status.py` | Rechnungsstatus aendern |
+| `03_invoice_status.py` | Rechnungsstatus ändern |
 | `04_cancel_invoice.py` | Rechnung stornieren |
 | `05_create_letter.py` | Brief erstellen und PDF |
 | `06_bank_transactions.py` | Bankkonten und Umsaetze |
