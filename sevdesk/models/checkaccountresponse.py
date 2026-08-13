@@ -26,5 +26,6 @@ class CheckAccountResponse(BaseModel):
     autoSyncTransactions: Optional[str] = Field(default=None, description="If this is 1 the account will be automatically updated through PayPal or finAPI. Only applicable for connected online accounts.")
     lastSync: Optional[str] = Field(default=None, description="Timepoint of the last payment import through PayPal or finAPI.")
     accountingNumber: Optional[str] = Field(default=None, description="The booking account used for this account, e.g. 1800 in SKR04 and 1200 in SKR03. Must be unique among all your CheckAccounts.")
+    bic: Optional[str] = Field(default=None, description="The BIC of the bank this account belongs to")
     class Config:
         populate_by_name = True
