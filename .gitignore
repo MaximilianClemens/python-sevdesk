@@ -16,3 +16,5 @@ __pycache__/
 *.pdf
 
 test/
+# Exporte des backupHelper
+export/

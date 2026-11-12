@@ -6,8 +6,10 @@ from .voucher_helper import VoucherHelper
 from .order_helper import OrderHelper
 from .creditnote_helper import CreditNoteHelper
 from .part_helper import PartHelper
+from .backup_helper import BackupHelper
 
 __all__ = [
     'ContactHelper', 'InvoiceHelper', 'LetterHelper', 'BankHelper',
-    'VoucherHelper', 'OrderHelper', 'CreditNoteHelper', 'PartHelper'
+    'VoucherHelper', 'OrderHelper', 'CreditNoteHelper', 'PartHelper',
+    'BackupHelper',
 ]

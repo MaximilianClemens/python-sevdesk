@@ -96,6 +96,19 @@ totals = client.voucherHelper.calculate_totals(vouchers)
 positions = client.voucherHelper.get_positions(voucher_id=123)
 ```
 
+### backupHelper
+
+Rein lesender Vollexport: Beleg-ZIPs, CSV-Exporte, Roh-JSON aller Modelle, Original-Belege,
+UStVA-Protokolle und ein `manifest.json` mit SHA-256, Abgleich und USt/VSt-Kontrollsummen.
+
+```python
+report = client.backupHelper.run('./export', start_year=2025)
+```
+
+```bash
+python -m sevdesk.backup --out ./export --from 2025
+```
+
 ### orderHelper
 
 ```python
@@ -157,6 +170,7 @@ vouchers = client.voucher.getVouchers()
 | `08_orders_estimates.py` | Angebote erstellen und verwalten |
 | `09_parts_articles.py` | Artikel/Produkte verwalten |
 | `10_creditnotes.py` | Gutschriften verwalten |
+| `11_full_backup.py` | Vollexport mit Manifest und Abgleich |
 
 Alle Samples nutzen `.env` fuer den API-Key:
 
