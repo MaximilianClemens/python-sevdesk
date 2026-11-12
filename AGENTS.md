@@ -104,6 +104,12 @@ python -m generator
 - `contactPerson_id` (SevUser) ist bei Dokumenten required, wird aber automatisch ermittelt
 - Manche Response-Felder sind als `str` statt `int` typisiert (API-Inkonsistenz)
 - Letter-API ist undocumented, funktioniert aber
+- DATEV-Exportjobs (`createDatev*ZipExportJob`) brauchen POST mit form-urlencoded Body, nicht GET wie in der Spec
+  (`client.request` akzeptiert dafür den Parameter `form`)
+- sevQuery-Datumsfilter brauchen Unix-Timestamps, ISO-Daten liefern stillschweigend leere Ergebnisse
+- Die Weboberfläche ruft `GET /BookingJob/Factory/bookAllFailedBookingJobs` und `GET /Voucher/Factory/processRecurringVouchers`
+  auf. Beide schreiben trotz GET, daher nicht in Controller aufnehmen
+- Neue undocumented Endpunkte findet man über einen HAR-Mitschnitt der Weboberfläche (DevTools, Netzwerk)
 
 ## Typische Aufgaben
 

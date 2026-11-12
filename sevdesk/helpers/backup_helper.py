@@ -5,8 +5,9 @@ Schreibzugriff. Nicht verwendet werden: enshrineDocuments, updateExportConfig
 und Order/getPdf (schreibt den Auftrag laut API-Doku fest).
 Jeder Schritt ueberspringt bereits vorhandene Dateien.
 
-DATEV-Exporte (createDatev*ZipExportJob) sind standardmaessig aus: Die API
-lehnt sie per GET mit "wrong HTTP Type" ab, obwohl die Spec GET nennt.
+DATEV-Exporte sind optional (datev=True): Sie legen per POST einen Exportjob
+an, schreiben aber nichts fest (enshrineDocuments=false). Die Spec nennt GET mit
+Query-Parametern, die API verlangt POST mit form-urlencoded Body.
 """
 import base64
 import calendar
@@ -22,7 +23,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-DATEV_SCOPE = 'EXTCD'
+DATEV_SCOPE = 'EXTC'
 BERLIN = ZoneInfo('Europe/Berlin')
 TAX_RULE_INPUT = '9'
 
@@ -143,6 +144,13 @@ class BackupHelper:
                 raise RuntimeError(f'{path or "download"}: HTTP {resp.status_code}: {self._scrub(resp.text[:200])}')
             return resp if raw else resp.json()
 
+    def _post_form(self, path, form):
+        resp = self.client.session.post(f'{self.client.api_base}{path}', data=form,
+                                        headers={'Authorization': self.client.api_token}, timeout=300)
+        if resp.status_code >= 400:
+            raise RuntimeError(f'{path}: HTTP {resp.status_code}: {self._scrub(resp.text[:200])}')
+        return resp.json()
+
     def _scrub(self, text):
         return text.replace(self.client.api_token, '***')
 
@@ -183,17 +191,15 @@ class BackupHelper:
     def datev_job(self, kind, start, end, target, by_paydate=False, poll=10, max_wait=1800):
         if target.exists():
             return target
-        params = {'startDate': int(start.timestamp()), 'endDate': int(end.timestamp()), 'scope': DATEV_SCOPE,
-                  'includeEnshrined': 'true'}
-        if by_paydate:
-            params['exportByPaydate'] = 'true'
+        form = {'startDate': int(start.timestamp()), 'endDate': int(end.timestamp()), 'scope': DATEV_SCOPE,
+                'includeEnshrined': 'true', 'exportByPaydate': 'true' if by_paydate else 'false'}
         if kind == 'csv':
             path = '/Export/createDatevCsvZipExportJob'
-            params['includeDocumentImages'] = 'true'
+            form.update(includeDocumentImages='true', enshrineDocuments='false', deltaExport='false')
         else:
             path = '/Export/createDatevXmlZipExportJob'
-            params.update(includeDocumentXml='true', includeExportedDocuments='true')
-        created = self._get(path, params)
+            form.update(includeDocumentXml='true', includeExportedDocuments='true')
+        created = self._post_form(path, form)
         objects = created.get('objects', created)
         job_id = objects.get('id') or objects.get('jobId') if isinstance(objects, dict) else objects
         deadline = time.time() + max_wait
@@ -359,6 +365,32 @@ class BackupHelper:
                         data = self._decode(resp.json())[0]
                     self._write(target, data)
 
+    def reports(self, out, start_year, end):
+        """EÜR, BWA und Saldenliste je Jahr, UStVA-Vorschau je Quartal, als JSON."""
+        reports = self.client.undocumented.accountingreports
+        taxation = 'IST'
+        vat = self.read_jsonl(out, 'vatreports')
+        if vat and str(vat[-1].get('actualTaxation')) == '0':
+            taxation = 'SOLL'
+        for year in range(start_year, end.year + 1):
+            last_month = 12 if year < end.year else end.month
+            jobs = {
+                f'euer_{year}.json': lambda y=year: reports.getEur(f'{y}-01-01', f'{y}-12-31'),
+                f'bwa_{year}.json': lambda y=year, m=last_month: reports.getBwa(f'{y}-01', f'{y}-{m:02d}'),
+                f'saldenliste_{year}.json': lambda y=year: reports.getBalanceList(f'{y}-01', f'{y}-12'),
+            }
+            for quarter in range(1, 5):
+                if (year, 3 * quarter - 2) > (end.year, end.month):
+                    break
+                jobs[f'ustva_vorschau_{year}_q{quarter}.json'] = lambda y=year, q=quarter: reports.getUstva(
+                    f'{y}-{3 * q - 2:02d}', f'{y}-{3 * q:02d}', taxation)
+            for name, call in jobs.items():
+                target = out / 'auswertungen' / name
+                if not target.exists():
+                    data = self._attempt(f'auswertung:{name}', call)
+                    if data is not None:
+                        self._write(target, json.dumps(data, ensure_ascii=False, indent=1).encode())
+
     # --- Abgleich ---
 
     def reconcile(self, out):
@@ -458,11 +490,9 @@ class BackupHelper:
         out.mkdir(parents=True, exist_ok=True)
         end = end or date.today()
 
-        def utc(y, m, d, h=0, mi=0, s=0):
-            return datetime(y, m, d, h, mi, s, tzinfo=timezone.utc)
-
         for year in range(start_year, end.year + 1) if datev else ():
-            first, last = utc(year, 1, 1), utc(year, 12, 31, 23, 59, 59)
+            first = datetime(year, 1, 1, tzinfo=BERLIN)
+            last = datetime(year, 12, 31, 23, 59, 59, tzinfo=BERLIN)
             print(f'DATEV {year}', flush=True)
             self._attempt(f'datev_csv:{year}', self.datev_job, 'csv', first, last, out / f'datev_csv_{year}.zip')
             self._attempt(f'datev_csv_paydate:{year}', self.datev_job, 'csv', first, last,
@@ -479,6 +509,8 @@ class BackupHelper:
         print('Einzeldokumente', flush=True)
         self.documents(out)
         self.invoice_documents(out)
+        print('Auswertungen', flush=True)
+        self.reports(out, start_year, end)
 
         report = {
             'erstellt': datetime.now(timezone.utc).isoformat(timespec='seconds'),

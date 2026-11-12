@@ -84,7 +84,7 @@ class Client:
         request_params = {
             k: v for k, v in params.items()
             if k not in url_params and
-            k != 'body' and
+            k not in ('body', 'form') and
             v} # v not None
         request_url = f'{self.api_base}{request_path}'
         request_body = params.get('body', None)
@@ -100,6 +100,7 @@ class Client:
             url=request_url,
             params=request_params,
             json=request_body,
+            data=params.get('form'),  # form-urlencoded, z.B. DATEV-Exportjobs
             headers={
                 'Authorization': self.api_token
             }

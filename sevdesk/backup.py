@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--out', required=True)
     parser.add_argument('--from', dest='start_year', type=int, required=True)
     parser.add_argument('--env', default='.env')
-    parser.add_argument('--datev', action='store_true', help='DATEV-Exportjobs versuchen (derzeit von der API abgelehnt)')
+    parser.add_argument('--datev', action='store_true', help='DATEV-CSV/XML je Jahr exportieren (legt Exportjobs an, schreibt nichts fest)')
     args = parser.parse_args()
 
     load_dotenv(args.env)

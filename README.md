@@ -109,6 +109,29 @@ report = client.backupHelper.run('./export', start_year=2025)
 python -m sevdesk.backup --out ./export --from 2025
 ```
 
+## Undocumented API
+
+Endpunkte der Weboberfläche, die nicht in der OpenAPI-Spec stehen (`client.undocumented.*`):
+
+```python
+reports = client.undocumented.accountingreports
+eur = reports.getEur('2026-01-01', '2026-12-31')          # EÜR
+ustva = reports.getUstva('2026-10', '2026-12', 'IST')    # UStVA-Vorschau
+bwa = reports.getBwa('2026-01', '2026-11')
+salden = reports.getBalanceList('2026-01', '2026-12')    # Summen- und Saldenliste
+
+job = client.undocumented.datevexport.createDatevCsvZipExportJob(form={
+    'startDate': 1735686000, 'endDate': 1767221999, 'scope': 'EXTC',
+    'includeDocumentImages': 'true', 'includeEnshrined': 'true',
+    'enshrineDocuments': 'false', 'exportByPaydate': 'false', 'deltaExport': 'false',
+})
+
+accounts = client.undocumented.masterdata.getSelectableAccounts()
+```
+
+`backupHelper.run(..., datev=True)` exportiert DATEV-CSV und -XML je Jahr und legt EÜR, BWA,
+Saldenliste und UStVA-Vorschau als JSON unter `auswertungen/` ab.
+
 ### orderHelper
 
 ```python
