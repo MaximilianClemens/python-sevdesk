@@ -1,9 +1,8 @@
-from typing import Optional, Any
+from typing import Optional
 from pydantic import BaseModel, Field
 
 class Metadaten(BaseModel):
-    pages: Optional[int] = None
+    pdf: Optional[str] = None
     docId: Optional[str] = None
-    thumbs: Optional[Any] = None
     class Config:
         populate_by_name = True

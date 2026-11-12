@@ -3,8 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class CreditNote_sendByWithRender(BaseModel):
-    thumbs: Optional[Any] = None
-    pages: Optional[int] = None
+    pdf: Optional[str] = Field(default=None, description="Base64-encoded PDF")
     docId: Optional[str] = None
     parameters: Optional[Any] = None
     class Config:
